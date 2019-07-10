@@ -144,7 +144,7 @@ func (msg *Message) JSON(v interface{}) error {
 
 // Sub 监听通道，有数据时触发回调 handler
 // example:
-// Redis.Sub("chat")(func(msg *redis.Message) {
+// redis.Sub("chat")(func(msg *redis.Message) {
 // 	fmt.Printf("receive message: %#v", msg)
 // })
 func Sub(channel string, handler func(*Message)) {

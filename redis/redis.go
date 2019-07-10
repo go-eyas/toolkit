@@ -1,14 +1,14 @@
 package redis
 
 import (
-	"time"
 	"errors"
+	"time"
 
 	"github.com/go-eyas/toolkit/log"
 	"github.com/go-redis/redis"
 )
 
-type RedisConfig struct {
+type Config struct {
 	Cluster  bool
 	Addrs    []string
 	Password string
@@ -39,7 +39,7 @@ var Redis *RedisClient
 var Client redisClientInterface
 
 // Init 初始化redis
-func Init(redisConf *RedisConfig) error {
+func Init(redisConf *Config) error {
 	r := &RedisClient{}
 	r.isCluster = redisConf.Cluster
 
