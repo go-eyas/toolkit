@@ -30,3 +30,24 @@ func main() {
 }
 
 ```
+
+## 配置文件加载顺序
+
+后面的会覆盖前面的，加上 file 参数传的是 `config`， shell 的环境变量 `CONFIG_ENV=dev`
+
+```
+../config.dev.yml
+../config.yml
+config.dev.yml
+config.yml
+../config.dev.json
+../config.json
+config.dev.json
+config.json
+../config.dev.toml
+../config.toml
+config.dev.toml
+config.toml
+```
+
+> 如果环境变量 `CONFIG_ENV` 没有设置，则默认为 `local`
