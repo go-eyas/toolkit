@@ -17,7 +17,7 @@ log.Init(&log.LogConfig{
 	Name:    "api", // 日志文件名
 	Console: true, // 是否把日志输出到控制台
 	DebugConsole: true, // 是否把调试日志也输出到控制台
-	Caller: true, // 是否输入打日志的文件和行号，会影响性能
+	Caller: true, // 是否输出打日志的文件和行号，会影响性能
 })
 
 log.Debug("is debug log")
