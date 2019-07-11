@@ -122,15 +122,6 @@ func HDel(key string, field ...string) error {
 	return nil
 }
 
-// Pub 发布事件
-// example:
-// Redis.Pub("chat", "this is a test message")
-func Pub(channel string, msg string) error {
-	cmd := Client.Publish(channel, msg)
-	_, err := cmd.Result()
-	return err
-}
-
 type Message struct {
 	Channel string
 	Pattern string
@@ -156,4 +147,13 @@ func Sub(channel string, handler func(*Message)) {
 	}
 
 	defer pb.Close()
+}
+
+// Pub 发布事件
+// example:
+// Redis.Pub("chat", "this is a test message")
+func Pub(channel string, msg string) error {
+	cmd := Client.Publish(channel, msg)
+	_, err := cmd.Result()
+	return err
 }
