@@ -1,3 +1,6 @@
+# 工具函数
+
+```
 package util // import "github.com/go-eyas/toolkit/util"
 
 
@@ -32,3 +35,5 @@ func ToString(v interface{}) string
 
 func ToStruct(raw interface{}, v interface{})
     ToStruct 把一个结构体转成另一个结构体，以json key作为关联
+
+```
