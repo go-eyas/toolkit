@@ -1,0 +1,6 @@
+ext = "toml"
+env = "local"
+isParseLocalToml = true
+[obj]
+array = [1,2,3,4,5]
+boolean = true

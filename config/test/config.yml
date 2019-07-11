@@ -1,0 +1,9 @@
+ext: "yml"
+env: ""
+isParseYml: true
+obj:
+  array: 
+    - 1
+    - 2
+    - 5
+  boolean: false

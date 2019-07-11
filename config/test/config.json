@@ -1,0 +1,9 @@
+{
+  "ext": "json",
+  "env": "none",
+  "isParseJson": true,
+  "obj": {
+    "array": [1,2,3],
+    "boolean": true
+  }
+}

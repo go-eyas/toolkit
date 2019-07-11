@@ -20,6 +20,12 @@ import "github.com/go-eyas/toolkit/redis"
 import "github.com/go-eyas/toolkit/websocket"
 ```
 
+# [配置项 config](./config)
+
+```go
+import "github.com/go-eyas/toolkit/config"
+```
+
 # [Gin 中间件 & 工具](./gin)
 
 ```go
