@@ -33,7 +33,7 @@ func main() {
 
 ## 配置文件加载顺序
 
-后面的会覆盖前面的，加上 file 参数传的是 `config`， shell 的环境变量 `CONFIG_ENV=dev`
+后面的会覆盖前面的，假设 file 参数传的是 `config`， shell 的环境变量 `CONFIG_ENV=dev`
 
 ```
 ../config.dev.yml
