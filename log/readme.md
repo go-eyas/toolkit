@@ -2,6 +2,8 @@
 
  * 日志滚动，保存15天内的日志，每1小时(整点)分割一次日志（可配置）
  * 日志文件分级保存 debug, info, error
+ * 可选是否输出日志到控制台
+ * 支持输出打日志的文件文件行号
 
 ## 使用
 
@@ -11,9 +13,11 @@
 
 // 使用前必须先初始化
 log.Init(&log.LogConfig{
-	Path:    ".runtime/logs",
-	Name:    "api",
-	Console: true,
+	Path:    ".runtime/logs", // 日志保存路径
+	Name:    "api", // 日志文件名
+	Console: true, // 是否把日志输出到控制台
+	DebugConsole: true, // 是否把调试日志也输出到控制台
+	Caller: true, // 是否输入打日志的文件和行号，会影响性能
 })
 
 log.Debug("is debug log")
