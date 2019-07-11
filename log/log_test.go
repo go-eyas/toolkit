@@ -6,9 +6,11 @@ import (
 
 func TestLog(t *testing.T) {
 	Init(&LogConfig{
-		Path:    ".runtime/logs",
-		Name:    "api",
-		Console: true,
+		Path:         ".runtime/logs",
+		Name:         "api",
+		Console:      true,
+		Caller:       true,
+		DebugConsole: true,
 	})
 
 	Debug("is debug log")

@@ -21,7 +21,10 @@ type LogConfig struct {
 	DebugConsole bool          // 是否把调试日志输出到控制台
 	MaxAge       time.Duration // 保存多久的日志，默认15天
 	RotationTime time.Duration // 多久分割一次日志
+	Caller       bool          // 是否打印文件行号
 }
+
+var printCaller = false
 
 // Init 初始化日志库
 func Init(conf *LogConfig) error {
@@ -32,6 +35,7 @@ func Init(conf *LogConfig) error {
 	if conf.RotationTime == 0 {
 		conf.RotationTime = time.Hour
 	}
+	printCaller = conf.Caller
 	return newLog(conf)
 }
 
