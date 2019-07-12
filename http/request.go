@@ -7,8 +7,8 @@ import (
 	"github.com/parnurzeal/gorequest"
 )
 
-// NewRequest 新建请求对象，默认useragent 为 chrome 75.0, 数据类型 json
-func NewRequest() *Request {
+// New 新建请求对象，默认useragent 为 chrome 75.0, 数据类型 json
+func New() *Request {
 	r := &Request{
 		http:    gorequest.New(),
 		headers: make(map[string]string),

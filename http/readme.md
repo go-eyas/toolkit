@@ -183,8 +183,8 @@ func Cookie(c *http.Cookie) *Request
 func Header(key, val string) *Request
     Header 设置请求 Header
 
-func NewRequest() *Request
-    NewRequest 新建请求对象，默认useragent 为 chrome 75.0, 数据类型 json
+func New() *Request
+    New 新建请求对象，默认useragent 为 chrome 75.0, 数据类型 json
 
 func Proxy(url string) *Request
     Proxy 设置请求代理
