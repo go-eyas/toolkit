@@ -2,6 +2,12 @@
 
 为了快速使用通用功能，做一次通用封装
 
+# [HTTP 客户端 http](./http)
+
+```go
+import "github.com/go-eyas/toolkit/http"
+```
+
 # [日志 log](./log)
 
 ```go
