@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 )
 
 // NewResponse 新建回应对象
@@ -16,12 +17,12 @@ type ResponseError []error
 // Error 实现 error 接口
 func (e ResponseError) Error() string {
 	errs := []error(e)
-	s := ""
+	s := []string{}
 	for _, e := range errs {
-		s += e.Error() + "\n"
+		s = append(s, e.Error())
 	}
 
-	return s
+	return strings.Join(s, "\n")
 }
 
 // HasErr 是否有错误
