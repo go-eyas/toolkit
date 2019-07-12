@@ -7,11 +7,14 @@ import (
 	"github.com/parnurzeal/gorequest"
 )
 
+type requestMiddlewareHandler func(*Request) *Request
+type responseMidlewareHandler func(*Request, *Response) *Response
+
 // New 新建请求对象，默认useragent 为 chrome 75.0, 数据类型 json
 func New() *Request {
 	r := &Request{
-		http:    gorequest.New(),
-		headers: make(map[string]string),
+		SuperAgent: gorequest.New(),
+		headers:    make(map[string]string),
 	}
 	r.Type("json")
 	r.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36")
@@ -21,41 +24,42 @@ func New() *Request {
 
 // Request 请求结构
 type Request struct {
-	http      *gorequest.SuperAgent
-	Req       *gorequest.Request
-	headers   map[string]string
-	userAgent string
-	querys    []interface{}
-	// mdls
+	SuperAgent *gorequest.SuperAgent
+	Req        *gorequest.Request
+	headers    map[string]string
+	userAgent  string
+	querys     []interface{}
+	reqMdls    []requestMiddlewareHandler
+	resMdls    []responseMidlewareHandler
 }
 
 // Type 请求提交方式，默认json
 func (r *Request) Type(name string) *Request {
-	r.http = r.http.Type(name)
+	r.SuperAgent = r.SuperAgent.Type(name)
 	return r
 }
 
 // UserAgent 设置请求 user-agent，默认是 chrome 75.0
 func (r *Request) UserAgent(name string) *Request {
-	r.http = r.http.Set("User-Agent", name)
+	r.SuperAgent = r.SuperAgent.Set("User-Agent", name)
 	return r
 }
 
 // Cookie 设置请求 Cookie
 func (r *Request) Cookie(c *http.Cookie) *Request {
-	r.http = r.http.AddCookie(c)
+	r.SuperAgent = r.SuperAgent.AddCookie(c)
 	return r
 }
 
 // Header 设置请求 Header
 func (r *Request) Header(key, val string) *Request {
-	r.http = r.http.Set(key, val)
+	r.SuperAgent = r.SuperAgent.Set(key, val)
 	return r
 }
 
 // Proxy 设置请求代理
 func (r *Request) Proxy(url string) *Request {
-	r.http = r.http.Proxy(url)
+	r.SuperAgent = r.SuperAgent.Proxy(url)
 	return r
 }
 
@@ -67,7 +71,19 @@ func (r *Request) Query(query interface{}) *Request {
 
 // Timeout 请求超时时间
 func (r *Request) Timeout(timeout time.Duration) *Request {
-	r.http = r.http.Timeout(timeout)
+	r.SuperAgent = r.SuperAgent.Timeout(timeout)
+	return r
+}
+
+// UseRequest 增加请求中间件
+func (r *Request) UseRequest(mdl requestMiddlewareHandler) *Request {
+	r.reqMdls = append(r.reqMdls, mdl)
+	return r
+}
+
+// UseResponse 增加响应中间件
+func (r *Request) UseResponse(mdl responseMidlewareHandler) *Request {
+	r.resMdls = append(r.resMdls, mdl)
 	return r
 }
 
@@ -91,33 +107,43 @@ func (r *Request) Do(method, url string, args ...interface{}) (*Response, error)
 	}
 
 	// set mthod url
-	r.http = r.http.CustomMethod(method, url)
+	r.SuperAgent = r.SuperAgent.CustomMethod(method, url)
 
 	// set query string
 	if query != nil {
-		r.http = r.http.Query(query)
+		r.SuperAgent = r.SuperAgent.Query(query)
 	}
 	for _, q := range r.querys {
-		r.http = r.http.Query(q)
+		r.SuperAgent = r.SuperAgent.Query(q)
 	}
 
 	// set body
 	if body != nil {
-		r.http = r.http.Send(body)
+		r.SuperAgent = r.SuperAgent.Send(body)
 	}
 
 	if file != nil {
 		r.Type("multipart")
-		r.http = r.http.SendFile(file)
+		r.SuperAgent = r.SuperAgent.SendFile(file)
 	}
 
-	res, resBody, errs := r.http.EndBytes()
+	// 执行请求中间件
+	for _, mdl := range r.reqMdls {
+		r = mdl(r)
+	}
+
+	res, resBody, errs := r.SuperAgent.EndBytes()
 
 	response := &Response{
 		Request: r,
-		Raw:     &res,
+		Raw:     res,
 		Body:    resBody,
 		Errs:    errs,
+	}
+
+	// 执行响应中间件
+	for _, mdl := range r.resMdls {
+		response = mdl(r, response)
 	}
 
 	return response, response.Err()

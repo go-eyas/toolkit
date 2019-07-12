@@ -42,6 +42,16 @@ func Timeout(timeout time.Duration) *Request {
 	return defaultRequest.Timeout(timeout)
 }
 
+// UseRequest 增加请求中间件
+func UseRequest(mdl requestMiddlewareHandler) *Request {
+	return defaultRequest.UseRequest(mdl)
+}
+
+// UseResponse 增加响应中间件
+func UseResponse(mdl responseMidlewareHandler) *Request {
+	return defaultRequest.UseResponse(mdl)
+}
+
 // Head 发起 head 请求
 func Head(url string, query interface{}) (*Response, error) {
 	return defaultRequest.Do("HEAD", url, query, nil, nil)

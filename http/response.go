@@ -2,8 +2,7 @@ package http
 
 import (
 	"encoding/json"
-
-	"github.com/parnurzeal/gorequest"
+	"net/http"
 )
 
 // NewResponse 新建回应对象
@@ -36,7 +35,7 @@ func (e ResponseError) HasErr() bool {
 // Response 回应对象
 type Response struct {
 	Request *Request
-	Raw     *gorequest.Response
+	Raw     *http.Response
 	Body    []byte
 	Errs    ResponseError
 }
@@ -62,4 +61,24 @@ func (r *Response) String() string {
 // Byte 获取响应字节
 func (r *Response) Byte() []byte {
 	return r.Body
+}
+
+// Status 获取响应状态码
+func (r *Response) Status() int {
+	return r.Raw.StatusCode
+}
+
+// Header 获取响应header
+func (r *Response) Header() http.Header {
+	return r.Raw.Header
+}
+
+// Cookies 获取响应 cookie
+func (r *Response) Cookies() []*http.Cookie {
+	return r.Raw.Cookies()
+}
+
+// IsError 是否响应错误
+func (r *Response) IsError() bool {
+	return r.Raw.StatusCode >= 400 && r.Err() != nil
 }

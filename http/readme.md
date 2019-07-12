@@ -112,6 +112,9 @@ var str string = res.String()
 // 将响应数据转为字节
 var bt []byte = res.Byte()
 
+// 获取响应状态码
+var statusCode = res.Status()
+
 // 与结构体绑定
 type ResTest struct {
   Hello string `json:"hello"`
@@ -131,6 +134,20 @@ h := http.Header("Authorization", "Bearer xxxxxxxxxxxxxxx"). // 设置header
     Proxy("http://127.0.0.1:1080") // 设置代理
 
 h.Get("xxxx", nil)
+```
+
+#### 中间件支持
+
+可以增加请求中间件和响应中间件，用于在请求或响应中改变内部操作
+
+```go
+http.UseRequest(func(req *http.Request) *http.Request {
+    fmt.Printf("http 发送 %s %s\n", req.SuperAgent.Method, req.SuperAgent.Url)
+    return req
+}).UseResponse(func(req *http.Request, res *http.Response) *http.Response {
+    fmt.Printf("http 接收 %s %s\n", req.SuperAgent.Method, req.SuperAgent.Url)
+    return res
+})
 ```
 
 #### 代理设置
