@@ -3,16 +3,17 @@ package http
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestGet(t *testing.T) {
 	http := Header("Authorization", "Bearer asfdfadsfdsfdasfds").UseRequest(func(req *Request) *Request {
-    fmt.Printf("http 发送 %s %s\n", req.SuperAgent.Method, req.SuperAgent.Url)
-    return req
+		fmt.Printf("http 发送 %s %s\n", req.SuperAgent.Method, req.SuperAgent.Url)
+		return req
 	}).UseResponse(func(req *Request, res *Response) *Response {
-	    fmt.Printf("http 接收 %s %s\n", req.SuperAgent.Method, req.SuperAgent.Url)
-	    return res
-	})
+		fmt.Printf("http 接收 %s %s\n", req.SuperAgent.Method, req.SuperAgent.Url)
+		return res
+	}).Timeout(time.Second * 10)
 
 	res, err := http.Get("https://api.github.com/repos/eyasliu/blog/issues", map[string]interface{}{
 		"per_page": 1,
@@ -31,6 +32,17 @@ func TestGet(t *testing.T) {
 	if len(s) > 0 {
 		t.Logf("get res struct: %+v", s)
 	}
+}
+
+func TestError(t *testing.T) {
+	res, err := Get("https://api.github.com/repos/eyasliu/blog/issuesx", nil)
+	if err != nil {
+		t.Logf("get error success: statusCode=%d body=%s error=%s", res.Status(), res.String(), err.Error())
+	} else {
+		t.Fatalf("res: statusCode=%d body=%s", res.Status(), res.String())
+		panic("should get 404 error")
+	}
+
 }
 
 // func TestProxy(t *testing.T) {

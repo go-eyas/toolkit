@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -144,6 +145,11 @@ func (r *Request) Do(method, url string, args ...interface{}) (*Response, error)
 	// 执行响应中间件
 	for _, mdl := range r.resMdls {
 		response = mdl(r, response)
+	}
+
+	statusCode := response.Status()
+	if statusCode >= 400 {
+		response.Errs = response.Errs.Add(fmt.Errorf("http response status code %d", statusCode))
 	}
 
 	return response, response.Err()

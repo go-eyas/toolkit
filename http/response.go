@@ -32,6 +32,12 @@ func (e ResponseError) HasErr() bool {
 	return true
 }
 
+// Add 增加错误
+func (e ResponseError) Add(err error) ResponseError {
+	e = append(e, err)
+	return e
+}
+
 // Response 回应对象
 type Response struct {
 	Request *Request
