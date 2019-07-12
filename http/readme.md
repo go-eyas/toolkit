@@ -124,7 +124,9 @@ res.JSON(rt)
 #### 提前设置通用项
 
 ```go
-h := http.Header("Authorization", "Bearer xxxxxxxxxxxxxxx").UserAgent("your custom user-agent").Cookie().Query("lang=zh_ch")
+h := http.Header("Authorization", "Bearer xxxxxxxxxxxxxxx").
+    UserAgent("your custom user-agent").
+    Query("lang=zh_ch")
 
 h.Get("xxxx", nil)
 ```
