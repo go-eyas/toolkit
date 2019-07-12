@@ -1,6 +1,9 @@
 package http
 
-import "net/http"
+import (
+	"time"
+	"net/http"
+)
 
 // Type 请求提交方式，默认json
 func Type(name string) *Request {
@@ -25,6 +28,16 @@ func Header(key, val string) *Request {
 // Proxy 设置请求代理
 func Proxy(url string) *Request {
 	return NewRequest().Proxy(url)
+}
+
+// Query 设置请求代理
+func Query(query interface{}) *Request {
+	return NewRequest().Query(query)
+}
+
+// Timeout 设置请求代理
+func Timeout(timeout time.Duration) *Request {
+	return NewRequest().Timeout(timeout)
 }
 
 // Head 发起 head 请求

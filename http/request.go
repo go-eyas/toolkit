@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/parnurzeal/gorequest"
 )
@@ -61,6 +62,12 @@ func (r *Request) Proxy(url string) *Request {
 // Query 增加查询参数
 func (r *Request) Query(query interface{}) *Request {
 	r.querys = append(r.querys, query)
+	return r
+}
+
+// Timeout 请求超时时间
+func (r *Request) Timeout(timeout time.Duration) *Request {
+	r.http = r.http.Timeout(timeout)
 	return r
 }
 

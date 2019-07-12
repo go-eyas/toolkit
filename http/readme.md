@@ -124,9 +124,11 @@ res.JSON(rt)
 #### 提前设置通用项
 
 ```go
-h := http.Header("Authorization", "Bearer xxxxxxxxxxxxxxx").
-    UserAgent("your custom user-agent").
-    Query("lang=zh_ch")
+h := http.Header("Authorization", "Bearer xxxxxxxxxxxxxxx"). // 设置header
+    UserAgent("your custom user-agent"). // 设置 useragent
+    Timeout(10 * time.Second). // 设置请求超时时间
+    Query("lang=zh_ch"). // 设置查询参数
+    Proxy("http://127.0.0.1:1080") // 设置代理
 
 h.Get("xxxx", nil)
 ```
@@ -146,7 +148,19 @@ http.Proxy("").Get("https://www.google.com", map[string]string{
 })
 ```
 
+#### 提交方式
 
+也就是 `Type(t string)` 函数支持的值
+
+```
+"text/html" uses "html"
+"application/json" uses "json"
+"application/xml" uses "xml"
+"text/plain" uses "text"
+"application/x-www-form-urlencoded" uses "urlencoded", "form" or "form-data"
+```
+
+如果是文件上传，则应该设置为 `multipart`
 
 ## godoc
 
