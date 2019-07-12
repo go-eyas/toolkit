@@ -182,13 +182,14 @@ http.Proxy("").Get("https://www.google.com", map[string]string{
 ## godoc
 
 ```
-package http // import "github.com/go-eyas/toolkit/http1234"
+package http // import "github.com/go-eyas/toolkit/http123"      
 
 
 TYPES
 
 type Request struct {
-        Req *gorequest.Request
+        SuperAgent *gorequest.SuperAgent
+        Req        *gorequest.Request
 
         // Has unexported fields.
 }
@@ -206,17 +207,26 @@ func New() *Request
 func Proxy(url string) *Request
     Proxy 设置请求代理
 
+func Query(query interface{}) *Request
+    Query 设置请求代理
+
+func Timeout(timeout time.Duration) *Request
+    Timeout 设置请求代理
+
 func Type(name string) *Request
     Type 请求提交方式，默认json
+
+func UseRequest(mdl requestMiddlewareHandler) *Request
+    UseRequest 增加请求中间件
+
+func UseResponse(mdl responseMidlewareHandler) *Request
+    UseResponse 增加响应中间件
 
 func UserAgent(name string) *Request
     UserAgent 设置请求 user-agent，默认是 chrome 75.0
 
 func (r *Request) Cookie(c *http.Cookie) *Request
     Cookie 设置请求 Cookie
-
-func (r *Request) Query(query interface{}) *Request
-    Query 设置查询参数
 
 func (r *Request) Del(url string, body interface{}) (*Response, error)
     Del 发起 delete 请求，body 是请求带的参数，可使用json字符串或者结构体
@@ -255,15 +265,27 @@ func (r *Request) Put(url string, body interface{}) (*Response, error)
 func (r *Request) PutFile(url string, file interface{}, body interface{}) (*Response, error)
     PutFile 发起 put 请求上传文件，将使用表单提交，file 是文件地址或者文件流， body 是请求带的参数，可使用json字符串或者结构体
 
+func (r *Request) Query(query interface{}) *Request
+    Query 增加查询参数
+
+func (r *Request) Timeout(timeout time.Duration) *Request
+    Timeout 请求超时时间
+
 func (r *Request) Type(name string) *Request
     Type 请求提交方式，默认json
+
+func (r *Request) UseRequest(mdl requestMiddlewareHandler) *Request
+    UseRequest 增加请求中间件
+
+func (r *Request) UseResponse(mdl responseMidlewareHandler) *Request
+    UseResponse 增加响应中间件
 
 func (r *Request) UserAgent(name string) *Request
     UserAgent 设置请求 user-agent，默认是 chrome 75.0
 
 type Response struct {
         Request *Request
-        Raw     *gorequest.Response
+        Raw     *http.Response
         Body    []byte
         Errs    ResponseError
 }
@@ -283,16 +305,52 @@ func NewResponse() *Response
 
 func Options(url string, query interface{}) (*Response, error)
     Options 发起 options 请求，query 查询参数
+
+func Patch(url string, body interface{}) (*Response, error)
+    Patch 发起 patch 请求，body 是请求带的参数，可使用json字符串或者结构体
+
+func Post(url string, body interface{}) (*Response, error)
+    Post 发起 post 请求，body 是请求带的参数，可使用json字符串或者结构体
+
+func PostFile(url string, file interface{}, body interface{}) (*Response, error)
+    PostFile 发起 post 请求上传文件，将使用表单提交，file 是文件地址或者文件流， body
+    是请求带的参数，可使用json字符串或者结构体
+
+func Put(url string, body interface{}) (*Response, error)
+    Put 发起 put 请求，body 是请求带的参数，可使用json字符串或者结构体
+
+func PutFile(url string, file interface{}, body interface{}) (*Response, error)
+    PutFile 发起 put 请求上传文件，将使用表单提交，file 是文件地址或者文件流， body 是请求带的参数，可使用json字符串或者结构体
+
+func (r *Response) Byte() []byte
+    Byte 获取响应字节
+
+func (r *Response) Cookies() []*http.Cookie
+    Cookies 获取响应 cookie
+
+func (r *Response) Err() error
     Err 获取响应错误
+
+func (r *Response) Header() http.Header
+    Header 获取响应header
+
+func (r *Response) IsError() bool
+    IsError 是否响应错误
 
 func (r *Response) JSON(v interface{}) error
     JSON 根据json绑定结构体
+
+func (r *Response) Status() int
+    Status 获取响应状态码
 
 func (r *Response) String() string
     String 获取响应字符串
 
 type ResponseError []error
     ResponseError 响应错误对象
+
+func (e ResponseError) Add(err error) ResponseError
+    Add 增加错误
 
 func (e ResponseError) Error() string
     Error 实现 error 接口
