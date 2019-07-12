@@ -1,9 +1,9 @@
 # 配置文件
 
  * 支持 YAML, JSON, TOML, 环境变量 设置配置项的值
- * 支持自动重载
  * 支持多文件覆盖配置
  * 支持默认值
+ * 修改文件后自动重载
 
 # 使用
 
@@ -48,6 +48,7 @@ config.json
 ../config.toml
 config.dev.toml
 config.toml
+环境变量
 ```
 
 > 如果环境变量 `CONFIG_ENV` 没有设置，则默认为 `local`

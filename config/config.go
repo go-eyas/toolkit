@@ -43,7 +43,7 @@ func parseFiles(name string) []string {
 func Init(file string, v interface{}) error {
 	files := parseFiles(file)
 
-	err := configor.Load(v, files...)
+	err := configor.New(&configor.Config{AutoReload: true}).Load(v, files...)
 
 	return err
 }
