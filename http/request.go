@@ -35,61 +35,61 @@ type Request struct {
 }
 
 // Type 请求提交方式，默认json
-func (r *Request) Type(name string) *Request {
+func (r Request) Type(name string) *Request {
 	r.SuperAgent = r.SuperAgent.Type(name)
-	return r
+	return &r
 }
 
 // UserAgent 设置请求 user-agent，默认是 chrome 75.0
-func (r *Request) UserAgent(name string) *Request {
+func (r Request) UserAgent(name string) *Request {
 	r.SuperAgent = r.SuperAgent.Set("User-Agent", name)
-	return r
+	return &r
 }
 
 // Cookie 设置请求 Cookie
-func (r *Request) Cookie(c *http.Cookie) *Request {
+func (r Request) Cookie(c *http.Cookie) *Request {
 	r.SuperAgent = r.SuperAgent.AddCookie(c)
-	return r
+	return &r
 }
 
 // Header 设置请求 Header
-func (r *Request) Header(key, val string) *Request {
+func (r Request) Header(key, val string) *Request {
 	r.SuperAgent = r.SuperAgent.Set(key, val)
-	return r
+	return &r
 }
 
 // Proxy 设置请求代理
-func (r *Request) Proxy(url string) *Request {
+func (r Request) Proxy(url string) *Request {
 	r.SuperAgent = r.SuperAgent.Proxy(url)
-	return r
+	return &r
 }
 
 // Query 增加查询参数
-func (r *Request) Query(query interface{}) *Request {
+func (r Request) Query(query interface{}) *Request {
 	r.querys = append(r.querys, query)
-	return r
+	return &r
 }
 
 // Timeout 请求超时时间
-func (r *Request) Timeout(timeout time.Duration) *Request {
+func (r Request) Timeout(timeout time.Duration) *Request {
 	r.SuperAgent = r.SuperAgent.Timeout(timeout)
-	return r
+	return &r
 }
 
 // UseRequest 增加请求中间件
-func (r *Request) UseRequest(mdl requestMiddlewareHandler) *Request {
+func (r Request) UseRequest(mdl requestMiddlewareHandler) *Request {
 	r.reqMdls = append(r.reqMdls, mdl)
-	return r
+	return &r
 }
 
 // UseResponse 增加响应中间件
-func (r *Request) UseResponse(mdl responseMidlewareHandler) *Request {
+func (r Request) UseResponse(mdl responseMidlewareHandler) *Request {
 	r.resMdls = append(r.resMdls, mdl)
-	return r
+	return &r
 }
 
 // Do 发出请求，method 请求方法，url 请求地址， query 查询参数，body 请求数据，file 文件对象/地址
-func (r *Request) Do(method, url string, args ...interface{}) (*Response, error) {
+func (r Request) Do(method, url string, args ...interface{}) (*Response, error) {
 	var query interface{} // 查询参数
 	var body interface{}  // body 数据
 	var file interface{}  // 发送文件
@@ -130,13 +130,14 @@ func (r *Request) Do(method, url string, args ...interface{}) (*Response, error)
 
 	// 执行请求中间件
 	for _, mdl := range r.reqMdls {
-		r = mdl(r)
+		r1 := mdl(&r)
+		r = *r1
 	}
 
 	res, resBody, errs := r.SuperAgent.EndBytes()
 
 	response := &Response{
-		Request: r,
+		Request: &r,
 		Raw:     res,
 		Body:    resBody,
 		Errs:    errs,
@@ -144,7 +145,7 @@ func (r *Request) Do(method, url string, args ...interface{}) (*Response, error)
 
 	// 执行响应中间件
 	for _, mdl := range r.resMdls {
-		response = mdl(r, response)
+		response = mdl(&r, response)
 	}
 
 	statusCode := response.Status()
