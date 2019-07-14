@@ -1,8 +1,11 @@
 package util
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"io"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"reflect"
@@ -99,4 +102,14 @@ func ToStruct(raw interface{}, v interface{}) error {
 		}
 	}
 	return json.Unmarshal(bt, v)
+}
+
+// ByteToReader 将字节转换成读取流
+func ByteToReader(b []byte) io.Reader {
+	return bytes.NewReader(b)
+}
+
+// ByteToReadCloser 将字节转换成一次性的读取流
+func ByteToReadCloser(b []byte) io.ReadCloser {
+	return ioutil.NopCloser(ByteToReader(b))
 }
