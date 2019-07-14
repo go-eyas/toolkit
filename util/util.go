@@ -53,8 +53,8 @@ func FuncName(f interface{}) string {
 }
 
 // AssignMap 合并多个map
-func AssignMap(maps ...map[string]interface{}) map[string]interface{} {
-	m := map[string]interface{}{}
+func AssignMap(maps ...map[interface{}]interface{}) map[interface{}]interface{} {
+	m := map[interface{}]interface{}{}
 
 	for _, mp := range maps {
 		for key, val := range mp {
