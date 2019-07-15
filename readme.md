@@ -69,13 +69,6 @@ conf := struct {
 config.Init(&conf)
 ```
 
-# [Gin 中间件 & 工具](./gin)
-
-```go
-import "github.com/go-eyas/toolkit/gin/util" // 工具函数
-import "github.com/go-eyas/toolkit/gin/middleware" // 中间件
-```
-
 # [数据库 ORM](./db)
 
 ```go
@@ -85,6 +78,13 @@ var db *gorm.DB = db.Gorm(&db.Config{"mysql", "username:password@127.0.0.1:3306/
 var db *xorm.Engine = db.Xorm(&db.Config{"mysql", "username:password@127.0.0.1:3306/test"})
 
 defer db.Close()
+```
+
+# [Gin 中间件 & 工具](./gin)
+
+```go
+import "github.com/go-eyas/toolkit/gin/util" // 工具函数
+import "github.com/go-eyas/toolkit/gin/middleware" // 中间件
 ```
 
 # [工具函数 util](./util)
