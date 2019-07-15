@@ -21,7 +21,7 @@ func main() {
   db, err = db.Gorm(db.Config{
     Driver: "mysql",
     URI: "user:password@(127.0.0.1:3306)/mydb",
-    Logger: log.Logger,
+    Logger: log.SugaredLogger,
   })
 
   // xorm
@@ -29,7 +29,7 @@ func main() {
   // db, err = db.Xorm(db.Config{
   //   Driver: "mysql",
   //   URI: "user:password@(127.0.0.1:3306)/mydb",
-  //   Logger: log.Logger,
+  //   Logger: log.SugaredLogger,
   // })
   
 

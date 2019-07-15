@@ -11,7 +11,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var Logger *zap.SugaredLogger
+var SugaredLogger *zap.SugaredLogger
+var Logger *zap.Logger
 
 // LogConfig 日志配置
 type LogConfig struct {
@@ -108,8 +109,8 @@ func newLog(conf *LogConfig) error {
 	// 最后创建具体的Logger
 	core := zapcore.NewTee(cores...)
 
-	logger := zap.New(core)
-	Logger = logger.Sugar()
+	Logger := zap.New(core)
+	SugaredLogger = Logger.Sugar()
 
 	return nil
 }
