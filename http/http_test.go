@@ -13,9 +13,10 @@ func TestGet(t *testing.T) {
 	}).UseResponse(func(req *Request, res *Response) *Response {
 		fmt.Printf("http 接收 %s %s\n", req.SuperAgent.Method, req.SuperAgent.Url)
 		return res
-	}).Timeout(time.Second * 10)
+	}).Timeout(time.Second * 10).
+		BaseURL("https://api.github.com")
 
-	res, err := http.Get("https://api.github.com/repos/eyasliu/blog/issues", map[string]interface{}{
+	res, err := http.Get("/repos/eyasliu/blog/issues", map[string]interface{}{
 		"per_page": 1,
 	})
 	if err != nil {

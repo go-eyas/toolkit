@@ -191,7 +191,7 @@ http.Proxy("").Get("https://www.google.com", map[string]string{
 ## godoc
 
 ```
-package http // import "github.com/go-eyas/toolkit/http123"      
+package http // import "github.com/go-eyas/toolkit/http"
 
 
 TYPES
@@ -203,6 +203,9 @@ type Request struct {
         // Has unexported fields.
 }
     Request 请求结构
+
+func BaseURL(url string) *Request
+    BaseURL 设置url前缀
 
 func Cookie(c *http.Cookie) *Request
     Cookie 设置请求 Cookie
@@ -234,13 +237,16 @@ func UseResponse(mdl responseMidlewareHandler) *Request
 func UserAgent(name string) *Request
     UserAgent 设置请求 user-agent，默认是 chrome 75.0
 
-func (r *Request) Cookie(c *http.Cookie) *Request
+func (r Request) BaseURL(url string) *Request
+    BaseURL 设置url前缀
+
+func (r Request) Cookie(c *http.Cookie) *Request
     Cookie 设置请求 Cookie
 
 func (r *Request) Del(url string, body interface{}) (*Response, error)
     Del 发起 delete 请求，body 是请求带的参数，可使用json字符串或者结构体
 
-func (r *Request) Do(method, url string, args ...interface{}) (*Response, error)
+func (r Request) Do(method, url string, query, body, file interface{}) (*Response, error)
     Do 发出请求，method 请求方法，url 请求地址， query 查询参数，body 请求数据，file 文件对象/地址
 
 func (r *Request) Get(url string, query interface{}) (*Response, error)
@@ -249,7 +255,7 @@ func (r *Request) Get(url string, query interface{}) (*Response, error)
 func (r *Request) Head(url string, query interface{}) (*Response, error)
     Head 发起 head 请求
 
-func (r *Request) Header(key, val string) *Request
+func (r Request) Header(key, val string) *Request
     Header 设置请求 Header
 
 func (r *Request) Options(url string, query interface{}) (*Response, error)
@@ -265,7 +271,7 @@ func (r *Request) PostFile(url string, file interface{}, body interface{}) (*Res
     PostFile 发起 post 请求上传文件，将使用表单提交，file 是文件地址或者文件流， body
     是请求带的参数，可使用json字符串或者结构体
 
-func (r *Request) Proxy(url string) *Request
+func (r Request) Proxy(url string) *Request
     Proxy 设置请求代理
 
 func (r *Request) Put(url string, body interface{}) (*Response, error)
@@ -274,22 +280,22 @@ func (r *Request) Put(url string, body interface{}) (*Response, error)
 func (r *Request) PutFile(url string, file interface{}, body interface{}) (*Response, error)
     PutFile 发起 put 请求上传文件，将使用表单提交，file 是文件地址或者文件流， body 是请求带的参数，可使用json字符串或者结构体
 
-func (r *Request) Query(query interface{}) *Request
+func (r Request) Query(query interface{}) *Request
     Query 增加查询参数
 
-func (r *Request) Timeout(timeout time.Duration) *Request
+func (r Request) Timeout(timeout time.Duration) *Request
     Timeout 请求超时时间
 
-func (r *Request) Type(name string) *Request
+func (r Request) Type(name string) *Request
     Type 请求提交方式，默认json
 
-func (r *Request) UseRequest(mdl requestMiddlewareHandler) *Request
+func (r Request) UseRequest(mdl requestMiddlewareHandler) *Request
     UseRequest 增加请求中间件
 
-func (r *Request) UseResponse(mdl responseMidlewareHandler) *Request
+func (r Request) UseResponse(mdl responseMidlewareHandler) *Request
     UseResponse 增加响应中间件
 
-func (r *Request) UserAgent(name string) *Request
+func (r Request) UserAgent(name string) *Request
     UserAgent 设置请求 user-agent，默认是 chrome 75.0
 
 type Response struct {

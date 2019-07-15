@@ -52,6 +52,11 @@ func UseResponse(mdl responseMidlewareHandler) *Request {
 	return defaultRequest.UseResponse(mdl)
 }
 
+// BaseURL 设置url前缀
+func BaseURL(url string) *Request {
+	return defaultRequest.BaseURL(url)
+}
+
 // Head 发起 head 请求
 func Head(url string, query interface{}) (*Response, error) {
 	return defaultRequest.Do("HEAD", url, query, nil, nil)

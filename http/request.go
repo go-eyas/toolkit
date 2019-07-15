@@ -15,7 +15,6 @@ type responseMidlewareHandler func(*Request, *Response) *Response
 func New() *Request {
 	r := &Request{
 		SuperAgent: gorequest.New(),
-		headers:    make(map[string]string),
 	}
 	r.Type("json")
 	r.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36")
@@ -27,11 +26,10 @@ func New() *Request {
 type Request struct {
 	SuperAgent *gorequest.SuperAgent
 	Req        *gorequest.Request
-	headers    map[string]string
-	userAgent  string
 	querys     []interface{}
 	reqMdls    []requestMiddlewareHandler
 	resMdls    []responseMidlewareHandler
+	baseURL    string
 }
 
 // Type 请求提交方式，默认json
@@ -82,9 +80,15 @@ func (r Request) UseRequest(mdl requestMiddlewareHandler) *Request {
 	return &r
 }
 
-// UseRespllonse 增加响应中间件
+// UseResponse 增加响应中间件
 func (r Request) UseResponse(mdl responseMidlewareHandler) *Request {
 	r.resMdls = append(r.resMdls, mdl)
+	return &r
+}
+
+// BaseURL 设置url前缀
+func (r Request) BaseURL(url string) *Request {
+	r.baseURL = url
 	return &r
 }
 
@@ -92,7 +96,7 @@ func (r Request) UseResponse(mdl responseMidlewareHandler) *Request {
 func (r Request) Do(method, url string, query, body, file interface{}) (*Response, error) {
 
 	// set mthod url
-	r.SuperAgent = r.SuperAgent.CustomMethod(method, url)
+	r.SuperAgent = r.SuperAgent.CustomMethod(method, r.baseURL+url)
 
 	// set query string
 	if query != nil {
