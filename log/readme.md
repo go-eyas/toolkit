@@ -36,3 +36,7 @@ log.Fatalf("is fatal log %s %d %v", "string", 123, map[string]string{"test": "he
 log.Panicf("is panic log %s %d %v", "string", 123, map[string]string{"test": "hello"})
 
 ```
+
+## godoc
+
+[API 文档](https://gowalker.org/github.com/go-eyas/toolkit/log)

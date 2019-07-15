@@ -77,3 +77,8 @@ Driver 的可选项为
 #### 其他数据库
 
 如果要是用其他数据库，如 oracle，tidb等等，执行查找资料并引入驱动
+
+
+# godoc
+
+[API 文档](https://gowalker.org/github.com/go-eyas/toolkit/db)

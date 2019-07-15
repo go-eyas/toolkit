@@ -46,3 +46,8 @@ route.Use(middleware.Ginzap(log.SugaredLogger))
 ```
 
 ## [工具函数](./util)
+
+
+# godoc
+
+[API 文档](https://gowalker.org/github.com/go-eyas/toolkit/gin)

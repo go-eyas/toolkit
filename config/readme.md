@@ -52,3 +52,7 @@ config.toml
 ```
 
 > 如果环境变量 `CONFIG_ENV` 没有设置，则默认为 `local`
+
+# godoc
+
+[API 文档](https://gowalker.org/github.com/go-eyas/toolkit/config)
