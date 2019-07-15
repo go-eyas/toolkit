@@ -82,7 +82,7 @@ func (r Request) UseRequest(mdl requestMiddlewareHandler) *Request {
 	return &r
 }
 
-// UseResponse 增加响应中间件
+// UseRespllonse 增加响应中间件
 func (r Request) UseResponse(mdl responseMidlewareHandler) *Request {
 	r.resMdls = append(r.resMdls, mdl)
 	return &r

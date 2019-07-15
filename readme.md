@@ -39,6 +39,12 @@ import "github.com/go-eyas/toolkit/gin/util" // 工具函数
 import "github.com/go-eyas/toolkit/gin/middleware" // 中间件
 ```
 
+# [数据库 ORM](./db)
+
+```go
+import "github.com/go-eyas/toolkit/db"
+```
+
 # [工具函数 util](./util)
 
 ```go
