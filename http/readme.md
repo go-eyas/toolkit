@@ -115,6 +115,12 @@ var bt []byte = res.Byte()
 // 获取响应状态码
 var statusCode = res.Status()
 
+// 获取响应的 header
+var http.Header = res.Header()
+
+// 获取响应的 cookies
+var []*http.Cookie = res.Cookies()
+
 // 与结构体绑定
 type ResTest struct {
   Hello string `json:"hello"`
@@ -123,6 +129,9 @@ rt := &ResTest{}
 res.JSON(rt)
 ```
 
+**注意：**
+
+ * http的响应状态码 >= 400 时会被视为错误，err 值是 `fmt.Errorf("http response status code %d", statusCode)`
 
 #### 提前设置通用项
 

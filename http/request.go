@@ -89,23 +89,7 @@ func (r Request) UseResponse(mdl responseMidlewareHandler) *Request {
 }
 
 // Do 发出请求，method 请求方法，url 请求地址， query 查询参数，body 请求数据，file 文件对象/地址
-func (r Request) Do(method, url string, args ...interface{}) (*Response, error) {
-	var query interface{} // 查询参数
-	var body interface{}  // body 数据
-	var file interface{}  // 发送文件
-
-	// get query & body
-	for i, v := range args {
-		switch i {
-		case 0:
-			query = v
-		case 1:
-			body = v
-		case 2:
-			file = v
-		}
-
-	}
+func (r Request) Do(method, url string, query, body, file interface{}) (*Response, error) {
 
 	// set mthod url
 	r.SuperAgent = r.SuperAgent.CustomMethod(method, url)
