@@ -11,9 +11,12 @@ import (
 )
 
 func main() {
-  h := http.Header("Authorization", "Bearer xxxxxxxxxxxxxxx").UserAgent("your custom user-agent").Cookie()
+  h := http.Header("Authorization", "Bearer xxxxxxxxxxxxxxx").
+    UserAgent("your custom user-agent").
+    Cookie().
+    BaseURL("https://api.github.com")
 
-  res, err := h.Get("https://api.github.com/repos/eyasliu/blog/issues", map[string]string{
+  res, err := h.Get("/repos/eyasliu/blog/issues", map[string]string{
     "per_page": 1,
   })
 
