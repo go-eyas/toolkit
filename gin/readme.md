@@ -44,3 +44,5 @@ log.Init(&log.Config{})
 
 route.Use(middleware.Ginzap(log.SugaredLogger))
 ```
+
+## [工具函数](./util)
