@@ -66,7 +66,7 @@ conf := struct {
   Host string
   Port int
 }{}
-config.Init(&conf)
+config.Init("config", &conf)
 ```
 
 # [数据库 ORM](./db)
