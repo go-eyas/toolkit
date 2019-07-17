@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	pb "github.com/go-eyas/toolkit/grpc/example"
-	"google.golang.org/grpc"
 )
 
 type RouteGuide struct{}
@@ -24,9 +23,9 @@ func (RouteGuide) RouteChat(stream pb.RouteGuide_RouteChatServer) error {
 }
 
 func TestServer(t *testing.T) {
-	_, err := Server(&ServerConfig{
+	_, err := NewServer(&ServerConfig{
 		Addr: ":6060",
-		Register: func(ser *grpc.Server) {
+		Register: func(ser Server) {
 			pb.RegisterRouteGuideServer(ser, &RouteGuide{})
 		},
 	})

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 EXEPATH="$(pwd)"
 
@@ -36,14 +36,14 @@ act_compiler_proto() {
     else if [ $file == *.proto ];then
       pwd_path=`pwd -W`
       echo -e $pwd_path/$file "...\c"
-      protoc -I=$GOPATH/src -I=. -I=$EXEPATH --proto_path=$EXEPATH --go_out=$EXEPATH $pwd_path/$file # TODO
+      protoc -I=$GOPATH/src -I=. -I=$EXEPATH --proto_path=$EXEPATH --go_out=plugins=grpc:$EXEPATH $pwd_path/$file # TODO
       green_text " 完成"
       fi
     fi
   done
 }
 
-check_cmd_or_exit go
+# check_cmd_or_exit go
 check_cmd_or_exit protoc
 echo $EXEPATH
 

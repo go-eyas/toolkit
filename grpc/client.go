@@ -2,7 +2,7 @@ package grpc
 
 import "google.golang.org/grpc"
 
-func Client(conf *ClientConfig) (*grpc.ClientConn, error) {
+func NewClient(conf *ClientConfig) (*grpc.ClientConn, error) {
 	if conf.Opts == nil {
 		conf.Opts = make([]grpc.DialOption, 0)
 	}

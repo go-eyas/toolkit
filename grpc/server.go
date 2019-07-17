@@ -6,8 +6,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Server 初始化 grpc 服务器
-func Server(conf *ServerConfig) (*grpc.Server, error) {
+// NewServer 初始化 grpc 服务器
+func NewServer(conf *ServerConfig) (*grpc.Server, error) {
 	if conf.Opts == nil {
 		conf.Opts = make([]grpc.ServerOption, 0)
 	}

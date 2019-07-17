@@ -4,18 +4,17 @@ import (
 	"google.golang.org/grpc"
 )
 
-type Config struct {
-	Addr string
-}
+type Server *grpc.Server
+type Client *grpc.ClientConn
 
 type ServerConfig struct {
-	Config
+	Addr     string
 	Opts     []grpc.ServerOption
-	Register func(*grpc.Server)
+	Register func(Server)
 }
 
 type ClientConfig struct {
-	Config
+	Addr     string
 	Opts     []grpc.DialOption
-	Register func(*grpc.ClientConn)
+	Register func(Client)
 }
