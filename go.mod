@@ -27,6 +27,7 @@ require (
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/parnurzeal/gorequest v0.2.15
 	github.com/smartystreets/goconvey v0.0.0-20190710185942-9d28bd7c0945 // indirect
+	github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94
 	github.com/tebeka/strftime v0.0.0-20140926081919-3f9c7761e312 // indirect
 	go.uber.org/atomic v1.4.0 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
