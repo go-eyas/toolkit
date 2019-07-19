@@ -57,6 +57,25 @@ go func() {
 http.ListenAndServe("127.0.0.1:8800", nil)
 ```
 
+# [RabbitMQ amqp](./amqp)
+
+```go
+import "github.com/go-eyas/toolkit/amqp"
+
+mq := amqp.New(*amqp.Config{
+	Addr: "amqp://guest:guest@127.0.0.1:5672",
+	ExchangeName: "toolkit.exchange.test",
+})
+queue := &amqp.Queue{Name: "toolkit.queue.test"}
+err := mq.Pub(queue, &amqp.Message{Data: []byte("{\"hello\":\"world\"}")})
+
+msgch, err := mq.Sub(queue)
+for msg := range msgch {
+	fmt.Printf("%s", string(msg.Data))
+}
+
+```
+
 # [配置项 config](./config)
 
 ```go

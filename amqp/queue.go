@@ -4,6 +4,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
+// Queue 队列
 type Queue struct {
 	Name       string     // 必须包含前缀标识使用类型 msg. | rpc. | reply. | notify.
 	Durable    bool       // 消息代理重启后，队列依旧存在

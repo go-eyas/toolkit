@@ -12,7 +12,7 @@ func defaultExchange(name string) *Exchange {
 	}
 }
 
-// MQExchange 定义交换机
+// Exchange 定义交换机
 type Exchange struct {
 	Name       string // 名称
 	Kind       string // 交换机类型，4 种类型之一

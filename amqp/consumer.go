@@ -10,7 +10,7 @@ func defaultConsumer() *Consumer {
 type Consumer struct {
 	Name      string
 	AutoAck   bool // 自动确认
-	Exclusive bool //
+	Exclusive bool
 	NoLocal   bool
 	NoWait    bool
 	Args      amqp.Table

@@ -12,6 +12,8 @@ type MQ struct {
 	Consumer *Consumer
 }
 
+// Init 初始化
+// 1. 初始化交换机
 func (mq *MQ) Init() error {
 	err := mq.exchangeDeclare(mq.Exchange)
 	if err != nil {
@@ -20,10 +22,11 @@ func (mq *MQ) Init() error {
 	return nil
 }
 
-type SubHandler func(*Message)
-
 var subMu sync.Mutex
 
+// Sub 定于队列消息
+// q 队列
+//return 接收消息的通道 ， 错误对象
 func (mq *MQ) Sub(q *Queue) (<-chan *Message, error) {
 	subMu.Lock()
 	defer subMu.Unlock()
@@ -75,11 +78,13 @@ func (mq *MQ) Sub(q *Queue) (<-chan *Message, error) {
 	}(ch)
 
 	return ch, nil
-
 }
 
 var pubMu sync.Mutex
 
+// Pub 给队列发送消息
+// q 队列
+// msg 消息
 func (mq *MQ) Pub(q *Queue, msg *Message) error {
 	pubMu.Lock()
 	defer pubMu.Unlock()
