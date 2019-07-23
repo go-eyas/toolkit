@@ -67,7 +67,7 @@ type Message struct {
 
 ```go
 import (
-	"github.com/go-eyas/toolkit/amqp"
+	"github.com/go-eyas/eyas/amqp"
 )
 
 func main() {
@@ -88,4 +88,4 @@ func main() {
 
 ## godoc
 
-[API 文档](https://gowalker.org/github.com/go-eyas/toolkit/amqp)
+[API 文档](https://gowalker.org/github.com/go-eyas/eyas/amqp)

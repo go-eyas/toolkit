@@ -5,7 +5,7 @@
 # [HTTP 客户端 http](./http)
 
 ```go
-import "github.com/go-eyas/toolkit/http"
+import "github.com/go-eyas/eyas/http"
 
 github := http.BaseURL("https://api.github.com")
 res, err := github.Get("/repos/eyasliu/blog/issues")
@@ -16,7 +16,7 @@ res.JSON(&data)
 # [日志 log](./log)
 
 ```go
-import "github.com/go-eyas/toolkit/log"
+import "github.com/go-eyas/eyas/log"
 
 log.Init(&log.Config{})
 log.Info("log init ok")
@@ -26,7 +26,7 @@ log.Infof("is info log %s %d %v", "string", 123, map[string]string{"test": "hell
 # [Redis](./redis)
 
 ```go
-import "github.com/go-eyas/toolkit/redis"
+import "github.com/go-eyas/eyas/redis"
 
 err := redis.Init(&redis.Config{
   Cluster:  false, // 是否集群
@@ -43,7 +43,7 @@ res.JSON(&data)
 # [长连接 Websocket](./websocket)
 
 ```go
-import "github.com/go-eyas/toolkit/websocket"
+import "github.com/go-eyas/eyas/websocket"
 
 ws := websocket.New(&Config{})
 http.HandleFunc("/ws", ws.HTTPHandler)
@@ -60,7 +60,7 @@ http.ListenAndServe("127.0.0.1:8800", nil)
 # [RabbitMQ amqp](./amqp)
 
 ```go
-import "github.com/go-eyas/toolkit/amqp"
+import "github.com/go-eyas/eyas/amqp"
 
 mq := amqp.New(*amqp.Config{
 	Addr: "amqp://guest:guest@127.0.0.1:5672",
@@ -79,7 +79,7 @@ for msg := range msgch {
 # [配置项 config](./config)
 
 ```go
-import "github.com/go-eyas/toolkit/config"
+import "github.com/go-eyas/eyas/config"
 
 conf := struct {
   Host string
@@ -91,7 +91,7 @@ config.Init("config", &conf)
 # [数据库 ORM](./db)
 
 ```go
-import "github.com/go-eyas/toolkit/db"
+import "github.com/go-eyas/eyas/db"
 
 var db *gorm.DB = db.Gorm(&db.Config{"mysql", "username:password@127.0.0.1:3306/test"})
 var db *xorm.Engine = db.Xorm(&db.Config{"mysql", "username:password@127.0.0.1:3306/test"})
@@ -102,12 +102,12 @@ defer db.Close()
 # [Gin 中间件 & 工具](./gin)
 
 ```go
-import "github.com/go-eyas/toolkit/gin/util" // 工具函数
-import "github.com/go-eyas/toolkit/gin/middleware" // 中间件
+import "github.com/go-eyas/eyas/gin/util" // 工具函数
+import "github.com/go-eyas/eyas/gin/middleware" // 中间件
 ```
 
 # [工具函数 util](./util)
 
 ```go
-import "github.com/go-eyas/toolkit/util"
+import "github.com/go-eyas/eyas/util"
 ```

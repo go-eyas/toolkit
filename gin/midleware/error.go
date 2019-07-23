@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/go-eyas/toolkit/gin/util"
+	"github.com/go-eyas/eyas/gin/util"
 
 	"github.com/gin-gonic/gin"
 )

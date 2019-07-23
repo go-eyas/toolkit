@@ -17,7 +17,7 @@
 ```go
 import (
   "github.com/gin-gonic/gin"
-  "github.com/go-eyas/toolkit/gin/util"
+  "github.com/go-eyas/eyas/gin/util"
 )
 
 func HelloHandler(c *gin.Context) {

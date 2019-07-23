@@ -5,7 +5,7 @@
 ```go
 import (
   "net/http"
-  "github.com/go-eyas/toolkit/websocket"
+  "github.com/go-eyas/eyas/websocket"
 )
 func main() {
   ws := websocket.New(&Config{
@@ -28,4 +28,4 @@ func main() {
 
 ## godoc
 
-[API 文档](https://gowalker.org/github.com/go-eyas/toolkit/websocket)
+[API 文档](https://gowalker.org/github.com/go-eyas/eyas/websocket)

@@ -23,7 +23,7 @@ func TestAmqp(t *testing.T) {
 	}
 
 	testCount := 1000000
-	t.Logf("test msg count: %d", testCount)
+
 	startTime := time.Now()
 
 	var wg sync.WaitGroup
@@ -32,25 +32,22 @@ func TestAmqp(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		wg.Add(1)
 	}
-	t.Logf("pub time: %d ns\n", time.Since(startTime))
+	t.Logf("发送 %d 条数据, 耗时 %d 纳秒 \n", testCount, time.Since(startTime))
 
 	startTime1 := time.Now()
+	wg.Add(testCount)
 	go func() {
 		msgs, err := mq.Sub(queue)
 		if err != nil {
 			panic(err)
 		}
-		//i := 0
 		for range msgs {
-			//i++
-			//fmt.Printf("receive: %d, msg %s\n", i, string(msg.Data))
 			wg.Done()
 		}
 	}()
 
 	wg.Wait()
-	t.Logf("sub time: %d ns\n", time.Since(startTime1))
+	t.Logf("消费 %d 条数据, 耗时 %d 纳秒 \n", testCount, time.Since(startTime1))
 
 }

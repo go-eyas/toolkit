@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/go-eyas/toolkit/log"
+	"github.com/go-eyas/eyas/log"
 	"github.com/go-redis/redis"
 )
 

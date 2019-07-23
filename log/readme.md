@@ -39,4 +39,4 @@ log.Panicf("is panic log %s %d %v", "string", 123, map[string]string{"test": "he
 
 ## godoc
 
-[API 文档](https://gowalker.org/github.com/go-eyas/toolkit/log)
+[API 文档](https://gowalker.org/github.com/go-eyas/eyas/log)

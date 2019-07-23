@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-eyas/toolkit/log"
-	"github.com/go-eyas/toolkit/util"
+	"github.com/go-eyas/eyas/log"
+	"github.com/go-eyas/eyas/util"
 	"github.com/go-redis/redis"
 )
 
