@@ -52,6 +52,9 @@ func (mq *MQ) connect() error {
 
 	// 重连后重新注册消费者
 	for _, q := range mq.subQueues {
+		q.IsDeclare = false
+		q.exchange = nil
+		q.q = nil
 		mq.bindMQChan(q)
 	}
 
@@ -92,24 +95,6 @@ func (mq *MQ) Sub(q *Queue) (<-chan *Message, error) {
 		q.consumerChan = make(chan *Message, 2)
 	}
 
-	// 定义队列
-	if !q.IsDeclare {
-		err := mq.queueDeclare(q)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	e := mq.Exchange
-
-	// 绑定交换机
-	if q.exchange != e {
-		err := mq.queueBind(q, e)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	mq.bindMQChan(q)
 
 	return q.consumerChan, nil
@@ -120,6 +105,24 @@ var bindMu sync.Mutex
 // 将 mq 通道绑到队列通道中
 func (mq *MQ) bindMQChan(q *Queue) error {
 	bindMu.Lock()
+	defer bindMu.Unlock()
+	// 定义队列
+	if !q.IsDeclare {
+		err := mq.queueDeclare(q)
+		if err != nil {
+			return err
+		}
+	}
+
+	e := mq.Exchange
+
+	// 绑定交换机
+	if q.exchange != e {
+		err := mq.queueBind(q, e)
+		if err != nil {
+			return err
+		}
+	}
 	msgChan, err := mq.Channel.Consume(
 		q.Name,
 		mq.Consumer.Name,
@@ -129,7 +132,6 @@ func (mq *MQ) bindMQChan(q *Queue) error {
 		mq.Consumer.NoWait,
 		mq.Consumer.Args,
 	)
-	bindMu.Unlock()
 
 	if err != nil {
 		return err
