@@ -78,7 +78,7 @@ func newLog(conf *LogConfig) error {
 			return lvl <= zapcore.DebugLevel
 		})
 
-		debugWriter, err := getWriter(conf.Path+"/"+conf.Name+"_debug.", conf)
+		debugWriter, err := getWriter(conf.Path+"/"+conf.Name+"_debug", conf)
 		if err != nil {
 			return err
 		}
