@@ -138,7 +138,7 @@ func newLog(conf *LogConfig) error {
 
 func getWriter(filename string, conf *LogConfig) (io.Writer, error) {
 	hook, err := rotatelogs.New(
-		filename+".%Y%m%d%H.log", // 没有使用go风格反人类的format格式
+		filename+".%Y-%m-%d.%H.log", // 没有使用go风格反人类的format格式
 		rotatelogs.WithLinkName(filepath.Base(filename)+".log"),
 		rotatelogs.WithMaxAge(conf.MaxAge),
 		rotatelogs.WithRotationTime(conf.RotationTime),
