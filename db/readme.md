@@ -9,8 +9,8 @@
 
 ```go
 import (
-  "github.com/go-eyas/eyas/db"
-  "github.com/go-eyas/eyas/log"
+  "github.com/go-eyas/toolkit/db"
+  "github.com/go-eyas/toolkit/log"
 )
 
 func main() {
@@ -69,7 +69,7 @@ Driver 的可选项为
 
 1. 导入驱动
   ```go
-  import "github.com/go-eyas/eyas/db/sqlite"
+  import "github.com/go-eyas/toolkit/db/sqlite"
   ```
 2. 安装 Gcc, G++ 编译环境，windows可使用 [TDM-GCC](http://tdm-gcc.tdragon.net/download) ，其他系统的自行解决
 3. 使用环境变量启用CGO: `CGO_ENABLED=1`
@@ -81,4 +81,4 @@ Driver 的可选项为
 
 # godoc
 
-[API 文档](https://gowalker.org/github.com/go-eyas/eyas/db)
+[API 文档](https://gowalker.org/github.com/go-eyas/toolkit/db)

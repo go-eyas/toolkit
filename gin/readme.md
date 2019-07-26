@@ -10,8 +10,8 @@
 
 ```go
 import (
-  "github.com/go-eyas/eyas/gin/middleware"
-  "github.com/go-eyas/eyas/log"
+  "github.com/go-eyas/toolkit/gin/middleware"
+  "github.com/go-eyas/toolkit/log"
 )
 
 log.Init(&log.Config{})
@@ -36,8 +36,8 @@ log.Init(&log.Config{})
 
 ```go
 import (
-  "github.com/go-eyas/eyas/gin/middleware"
-  "github.com/go-eyas/eyas/log"
+  "github.com/go-eyas/toolkit/gin/middleware"
+  "github.com/go-eyas/toolkit/log"
 )
 
 log.Init(&log.Config{})
@@ -50,4 +50,4 @@ route.Use(middleware.Ginzap(log.SugaredLogger))
 
 # godoc
 
-[API 文档](https://gowalker.org/github.com/go-eyas/eyas/gin)
+[API 文档](https://gowalker.org/github.com/go-eyas/toolkit/gin)

@@ -109,7 +109,7 @@ func newLog(conf *LogConfig) error {
 	// 最后创建具体的Logger
 	core := zapcore.NewTee(cores...)
 
-	Logger := zap.New(core)
+	Logger = zap.New(core)
 	SugaredLogger = Logger.Sugar()
 
 	return nil

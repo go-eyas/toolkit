@@ -7,7 +7,7 @@
 ```go
 import (
   "fmt"
-  "github.com/go-eyas/eyas/http"
+  "github.com/go-eyas/toolkit/http"
 )
 
 func main() {
@@ -193,4 +193,4 @@ http.Proxy("").Get("https://www.google.com", map[string]string{
 
 ## godoc
 
-[API 文档](https://gowalker.org/github.com/go-eyas/eyas/http)
+[API 文档](https://gowalker.org/github.com/go-eyas/toolkit/http)

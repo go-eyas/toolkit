@@ -8,7 +8,7 @@
 # 使用
 
 ```go
-import "github.com/go-eyas/eyas/config"
+import "github.com/go-eyas/toolkit/config"
 
 type Config struct {
 	IsParseJSON      bool `json:"isParseJson"`
@@ -55,4 +55,4 @@ config.toml
 
 # godoc
 
-[API 文档](https://gowalker.org/github.com/go-eyas/eyas/config)
+[API 文档](https://gowalker.org/github.com/go-eyas/toolkit/config)

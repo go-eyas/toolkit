@@ -5,7 +5,7 @@
 只支持单例 redis
 
 ```go
-import "github.com/go-eyas/eyas/redis"
+import "github.com/go-eyas/toolkit/redis"
 
 func main() {
   // 使用前必须先初始化
@@ -42,4 +42,4 @@ func main() {
 
 ## godoc
 
-[API 文档](https://gowalker.org/github.com/go-eyas/eyas/redis)
+[API 文档](https://gowalker.org/github.com/go-eyas/toolkit/redis)

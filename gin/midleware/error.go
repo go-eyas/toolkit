@@ -1,13 +1,15 @@
 package middleware
 
 import (
-	"github.com/go-eyas/eyas/gin/util"
+	"github.com/go-eyas/toolkit/gin/util"
 
 	"github.com/gin-gonic/gin"
 )
+
 type errLogger interface {
 	Errorf(string, ...interface{})
 }
+
 // var codeUnknowError = 999999
 
 // ErrorMiddleware 捕获到在http处理时的错误
