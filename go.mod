@@ -13,12 +13,15 @@ require (
 	github.com/jinzhu/configor v1.1.0
 	github.com/jinzhu/gorm v1.9.10
 	github.com/lestrrat-go/file-rotatelogs v2.2.0+incompatible
+	github.com/lestrrat-go/strftime v0.0.0-20190725011945-5c849dd2c51d // indirect
 	github.com/lib/pq v1.1.1
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/parnurzeal/gorequest v0.2.15
 	github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94
+	go.uber.org/atomic v1.4.0 // indirect
+	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v1.10.0
 	golang.org/x/tools v0.0.0-20190328211700-ab21143f2384 // indirect
 	google.golang.org/grpc v1.19.0

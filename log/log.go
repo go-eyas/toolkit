@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"time"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
@@ -16,10 +17,10 @@ var Logger *zap.Logger
 
 // LogConfig 日志配置
 type LogConfig struct {
+	Level        string        // 日志级别
 	Path         string        // 路径
 	Name         string        // 文件名称
 	Console      bool          // 是否输出到控制台
-	DebugConsole bool          // 是否把调试日志输出到控制台
 	MaxAge       time.Duration // 保存多久的日志，默认15天
 	RotationTime time.Duration // 多久分割一次日志
 	Caller       bool          // 是否打印文件行号
@@ -62,48 +63,68 @@ func newLog(conf *LogConfig) error {
 		},
 	})
 
-	// 实现两个判断日志等级的interface
-	debugLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl <= zapcore.DebugLevel
-	})
-
-	infoLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl < zapcore.WarnLevel && lvl > zapcore.DebugLevel
-	})
-
-	warnLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl >= zapcore.WarnLevel
-	})
-
-	// 获取 debug、info、warn日志文件的io.Writer 抽象 getWriter() 在下方实现
-	debugWriter, err := getWriter(conf.Path+"/"+conf.Name+"_debug.log", conf)
-	if err != nil {
-		return err
-	}
-	infoWriter, err := getWriter(conf.Path+"/"+conf.Name+"_info.log", conf)
-	if err != nil {
-		return err
-	}
-	warnWriter, err := getWriter(conf.Path+"/"+conf.Name+"_error.log", conf)
+	level := new(zapcore.Level)
+	err := level.Set(conf.Level)
 	if err != nil {
 		return err
 	}
 
-	cores := []zapcore.Core{
-		zapcore.NewCore(encoder, zapcore.AddSync(debugWriter), debugLevel),
-		zapcore.NewCore(encoder, zapcore.AddSync(infoWriter), infoLevel),
-		zapcore.NewCore(encoder, zapcore.AddSync(warnWriter), warnLevel),
+	lv := *level
+
+	cores := []zapcore.Core{}
+
+	if lv <= zapcore.DebugLevel {
+		debugLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+			return lvl <= zapcore.DebugLevel
+		})
+
+		debugWriter, err := getWriter(conf.Path+"/"+conf.Name+"_debug.", conf)
+		if err != nil {
+			return err
+		}
+		cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(debugWriter), debugLevel))
+	}
+	if lv <= zapcore.InfoLevel {
+		infoLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+			return lvl < zapcore.WarnLevel && lvl > zapcore.DebugLevel
+		})
+
+		infoWriter, err := getWriter(conf.Path+"/"+conf.Name+"_info", conf)
+		if err != nil {
+			return err
+		}
+
+		cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(infoWriter), infoLevel))
+	}
+
+	if lv <= zapcore.WarnLevel {
+		warnLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+			return lvl >= zapcore.WarnLevel
+		})
+		warnWriter, err := getWriter(conf.Path+"/"+conf.Name+"_error", conf)
+		if err != nil {
+			return err
+		}
+		cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(warnWriter), warnLevel))
+	} else {
+		// 级别是 error 以上
+		errorLevel := lv
+		errorWriter, err := getWriter(conf.Path+"/"+conf.Name+"_error", conf)
+		if err != nil {
+			return err
+		}
+		cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(errorWriter), errorLevel))
 	}
 
 	if conf.Console {
 		consoleWriter := os.Stdout
-		var consoleCore zapcore.Core
-		if conf.DebugConsole {
-			consoleCore = zapcore.NewCore(encoder, zapcore.AddSync(consoleWriter), zapcore.DebugLevel)
-		} else {
-			consoleCore = zapcore.NewCore(encoder, zapcore.AddSync(consoleWriter), zapcore.InfoLevel)
-		}
-		cores = append(cores, consoleCore)
+		//var consoleCore zapcore.Core
+		//if conf.DebugConsole {
+		//	consoleCore = zapcore.NewCore(encoder, zapcore.AddSync(consoleWriter), lv)
+		//} else {
+		//	consoleCore = zapcore.NewCore(encoder, zapcore.AddSync(consoleWriter), lv)
+		//}
+		cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(consoleWriter), lv))
 	}
 
 	// 最后创建具体的Logger
@@ -117,8 +138,8 @@ func newLog(conf *LogConfig) error {
 
 func getWriter(filename string, conf *LogConfig) (io.Writer, error) {
 	hook, err := rotatelogs.New(
-		filename+".%Y%m%d%H", // 没有使用go风格反人类的format格式
-		rotatelogs.WithLinkName(filename),
+		filename+".%Y%m%d%H.log", // 没有使用go风格反人类的format格式
+		rotatelogs.WithLinkName(filepath.Base(filename)+".log"),
 		rotatelogs.WithMaxAge(conf.MaxAge),
 		rotatelogs.WithRotationTime(conf.RotationTime),
 	)

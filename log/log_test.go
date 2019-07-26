@@ -5,13 +5,16 @@ import (
 )
 
 func TestLog(t *testing.T) {
-	Init(&LogConfig{
-		Path:         ".runtime/logs",
-		Name:         "api",
-		Console:      true,
-		Caller:       true,
-		DebugConsole: true,
+	err := Init(&LogConfig{
+		Level:   "debug",
+		Path:    ".runtime/logs",
+		Name:    "api",
+		Console: true,
+		Caller:  true,
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	Debug("is debug log")
 	Info("is info log")
