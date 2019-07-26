@@ -15,8 +15,9 @@ type Queue struct {
 	Args       amqp.Table // 一些消息代理用他来完成类似与TTL的某些额外功能
 	IsDeclare  bool       // 是否已定义
 
-	q        *amqp.Queue
-	exchange *Exchange // 绑定的交换机
+	q            *amqp.Queue
+	exchange     *Exchange     // 绑定的交换机
+	consumerChan chan *Message // 接收该队列数据的通道
 }
 
 func (q *Queue) replyTo() string {

@@ -2,7 +2,6 @@ package amqp
 
 import (
 	"errors"
-	"github.com/streadway/amqp"
 )
 
 const (
@@ -35,18 +34,9 @@ func New(conf *Config) (*MQ, error) {
 		conf.Consumer = defaultConsumer()
 	}
 
-	conn, err := amqp.Dial(conf.Addr)
-	if err != nil {
-		return nil, err
-	}
-	channel, err := conn.Channel()
-	if err != nil {
-		return nil, err
-	}
+	m := &MQ{Addr: conf.Addr, Exchange: conf.Exchange, Consumer: conf.Consumer}
 
-	m := &MQ{conn, channel, conf.Exchange, conf.Consumer}
-
-	err = m.Init()
+	err := m.Init()
 	if err != nil {
 		return nil, err
 	}

@@ -1,26 +1,77 @@
 package amqp
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/streadway/amqp"
 )
 
 type MQ struct {
-	Client   *amqp.Connection
-	Channel  *amqp.Channel
-	Exchange *Exchange
-	Consumer *Consumer
+	Addr        string
+	Client      *amqp.Connection
+	Channel     *amqp.Channel
+	Exchange    *Exchange
+	Consumer    *Consumer
+	notifyClose chan *amqp.Error
+	subQueues   []*Queue // 已注册为消费者的通道
+
 }
 
 // Init 初始化
 // 1. 初始化交换机
 func (mq *MQ) Init() error {
-	err := mq.exchangeDeclare(mq.Exchange)
+	mq.subQueues = []*Queue{}
+
+	err := mq.connect()
 	if err != nil {
 		return err
 	}
+
+	// 初始化默认交换机
+	err = mq.exchangeDeclare(mq.Exchange)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (mq *MQ) connect() error {
+	conn, err := amqp.Dial(mq.Addr)
+	if err != nil {
+		return err
+	}
+	mq.Client = conn
+	channel, err := conn.Channel()
+	if err != nil {
+		return err
+	}
+	mq.Channel = channel
+
+	// 重连后重新注册消费者
+	for _, q := range mq.subQueues {
+		mq.bindMQChan(q)
+	}
+
+	// 断线重连
+	go mq.reconnect()
+
+	return nil
+}
+
+func (mq *MQ) reconnect() {
+	mq.notifyClose = make(chan *amqp.Error)
+	mq.Channel.NotifyClose(mq.notifyClose)
+
+	for {
+		select {
+		case <-mq.notifyClose:
+			fmt.Println("rabbitmq connection is close, retrying...")
+			mq.connect()
+			break
+		}
+	}
 }
 
 var subMu sync.Mutex
@@ -31,6 +82,13 @@ var subMu sync.Mutex
 func (mq *MQ) Sub(q *Queue) (<-chan *Message, error) {
 	subMu.Lock()
 	defer subMu.Unlock()
+
+	mq.subQueues = append(mq.subQueues, q)
+
+	// 初始化接收通道
+	if q.consumerChan == nil {
+		q.consumerChan = make(chan *Message, 2)
+	}
 
 	// 定义队列
 	if !q.IsDeclare {
@@ -50,6 +108,16 @@ func (mq *MQ) Sub(q *Queue) (<-chan *Message, error) {
 		}
 	}
 
+	mq.bindMQChan(q)
+
+	return q.consumerChan, nil
+}
+
+var bindMu sync.Mutex
+
+// 将 mq 通道绑到队列通道中
+func (mq *MQ) bindMQChan(q *Queue) error {
+	bindMu.Lock()
 	msgChan, err := mq.Channel.Consume(
 		q.Name,
 		mq.Consumer.Name,
@@ -59,12 +127,11 @@ func (mq *MQ) Sub(q *Queue) (<-chan *Message, error) {
 		mq.Consumer.NoWait,
 		mq.Consumer.Args,
 	)
+	bindMu.Unlock()
 
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	ch := make(chan *Message, 2)
 
 	go func(ch chan<- *Message) {
 		for d := range msgChan {
@@ -76,9 +143,9 @@ func (mq *MQ) Sub(q *Queue) (<-chan *Message, error) {
 			}
 			ch <- msg
 		}
-	}(ch)
+	}(q.consumerChan)
 
-	return ch, nil
+	return nil
 }
 
 var pubMu sync.Mutex
