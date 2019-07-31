@@ -7,6 +7,7 @@ import (
 // Queue 队列
 type Queue struct {
 	Name       string     // 必须包含前缀标识使用类型 msg. | rpc. | reply. | notify.
+	Key        string     // 和交换机绑定时用的Key
 	Durable    bool       // 消息代理重启后，队列依旧存在
 	AutoDelete bool       // 当最后一个消费者退订后即被删除
 	Exclusive  bool       // 只被一个连接（connection）使用，而且当连接关闭后队列即被删除
@@ -25,4 +26,11 @@ func (q *Queue) replyTo() string {
 		return ""
 	}
 	return q.ReplyTo.Name
+}
+
+func (q *Queue) getKey() string {
+	if q.Key == "" {
+		return q.Name
+	}
+	return q.Key
 }

@@ -43,6 +43,7 @@ type Exchange struct {
 ```go
 type Queue struct {
 	Name       string     // 必须包含前缀标识使用类型 msg. | rpc. | reply. | notify.
+	Key        string     // 和交换机绑定时用的Key， 如果不设置，默认和 Name 一样
 	Durable    bool       // 消息代理重启后，队列依旧存在
 	AutoDelete bool       // 当最后一个消费者退订后即被删除
 	Exclusive  bool       // 只被一个连接（connection）使用，而且当连接关闭后队列即被删除

@@ -154,10 +154,11 @@ func (mq *MQ) bindMQChan(q *Queue) error {
 
 var pubMu sync.Mutex
 
-// Pub 给队列发送消息
-// q 队列
-// msg 消息
-func (mq *MQ) Pub(q *Queue, msg *Message) error {
+// Pub 给队列发送消息,
+// q 队列,
+// msg 消息,
+// exchanges 交换机，可以用多个交换机多次发送，默认使用初始化时指定的交换机
+func (mq *MQ) Pub(q *Queue, msg *Message, exchanges ...*Exchange) error {
 	pubMu.Lock()
 	defer pubMu.Unlock()
 
@@ -168,29 +169,56 @@ func (mq *MQ) Pub(q *Queue, msg *Message) error {
 			return err
 		}
 	}
-	e := mq.Exchange
-	// 绑定交换机
-	if q.exchange != e {
-		err := mq.queueBind(q, e)
+
+	if len(exchanges) == 0 {
+		exchanges = append(exchanges, mq.Exchange)
+		// 绑定初始化的交换机
+		if q.exchange != mq.Exchange {
+			err := mq.queueBind(q, mq.Exchange)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		for _, e := range exchanges {
+			if !e.IsDeclare {
+				err := mq.exchangeDeclare(e)
+				if err != nil {
+					return err
+				}
+			}
+			err := mq.Channel.QueueBind(
+				q.Name,
+				q.getKey(),
+				e.Name,
+				false,
+				nil,
+			)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	for _, e := range exchanges {
+		// 发消息
+		err := mq.Channel.Publish(
+			e.Name,
+			q.getKey(),
+			false,
+			false,
+			amqp.Publishing{
+				ContentType: msg.ContentType,
+				ReplyTo:     q.replyTo(),
+				Body:        msg.Data,
+			},
+		)
 		if err != nil {
 			return err
 		}
 	}
 
-	// 发消息
-	err := mq.Channel.Publish(
-		e.Name,
-		q.Name,
-		false,
-		false,
-		amqp.Publishing{
-			ContentType: msg.ContentType,
-			ReplyTo:     q.replyTo(),
-			Body:        msg.Data,
-		},
-	)
-
-	return err
+	return nil
 
 }
 
@@ -212,6 +240,9 @@ func (mq *MQ) queueDeclare(q *Queue) error {
 }
 
 func (mq *MQ) exchangeDeclare(e *Exchange) error {
+	if e.IsDeclare {
+		return nil
+	}
 	err := mq.Channel.ExchangeDeclare(
 		e.Name,
 		e.Kind,
@@ -221,13 +252,19 @@ func (mq *MQ) exchangeDeclare(e *Exchange) error {
 		e.NoWait,
 		e.Args,
 	)
+	if err == nil {
+		e.IsDeclare = true
+	}
 	return err
 }
 
 func (mq *MQ) queueBind(q *Queue, e *Exchange) error {
+	if !e.IsDeclare {
+		mq.exchangeDeclare(e)
+	}
 	err := mq.Channel.QueueBind(
 		q.Name,
-		q.Name,
+		q.getKey(),
 		e.Name,
 		false,
 		nil,

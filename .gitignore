@@ -1,3 +1,4 @@
 runtime
 .runtime
 .idea
+*.log
