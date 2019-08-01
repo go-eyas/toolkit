@@ -30,7 +30,7 @@ func (mq *MQ) Init() error {
 	}
 
 	// 初始化默认交换机
-	err = mq.exchangeDeclare(mq.Exchange)
+	err = mq.ExchangeDeclare(mq.Exchange)
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func (mq *MQ) bindMQChan(q *Queue) error {
 	defer bindMu.Unlock()
 	// 定义队列
 	if !q.IsDeclare {
-		err := mq.queueDeclare(q)
+		err := mq.QueueDeclare(q)
 		if err != nil {
 			return err
 		}
@@ -118,7 +118,7 @@ func (mq *MQ) bindMQChan(q *Queue) error {
 
 	// 绑定交换机
 	if q.exchange != e {
-		err := mq.queueBind(q, e)
+		err := mq.QueueBind(q, e)
 		if err != nil {
 			return err
 		}
@@ -164,7 +164,7 @@ func (mq *MQ) Pub(q *Queue, msg *Message, exchanges ...*Exchange) error {
 
 	// 定义队列
 	if !q.IsDeclare {
-		err := mq.queueDeclare(q)
+		err := mq.QueueDeclare(q)
 		if err != nil {
 			return err
 		}
@@ -174,7 +174,7 @@ func (mq *MQ) Pub(q *Queue, msg *Message, exchanges ...*Exchange) error {
 		exchanges = append(exchanges, mq.Exchange)
 		// 绑定初始化的交换机
 		if q.exchange != mq.Exchange {
-			err := mq.queueBind(q, mq.Exchange)
+			err := mq.QueueBind(q, mq.Exchange)
 			if err != nil {
 				return err
 			}
@@ -182,14 +182,14 @@ func (mq *MQ) Pub(q *Queue, msg *Message, exchanges ...*Exchange) error {
 	} else {
 		for _, e := range exchanges {
 			if !e.IsDeclare {
-				err := mq.exchangeDeclare(e)
+				err := mq.ExchangeDeclare(e)
 				if err != nil {
 					return err
 				}
 			}
 			err := mq.Channel.QueueBind(
 				q.Name,
-				q.getKey(),
+				q.GetKey(),
 				e.Name,
 				false,
 				nil,
@@ -204,12 +204,12 @@ func (mq *MQ) Pub(q *Queue, msg *Message, exchanges ...*Exchange) error {
 		// 发消息
 		err := mq.Channel.Publish(
 			e.Name,
-			q.getKey(),
+			q.GetKey(),
 			false,
 			false,
 			amqp.Publishing{
 				ContentType: msg.ContentType,
-				ReplyTo:     q.replyTo(),
+				ReplyTo:     q.ReplyQueue(),
 				Body:        msg.Data,
 			},
 		)
@@ -222,7 +222,7 @@ func (mq *MQ) Pub(q *Queue, msg *Message, exchanges ...*Exchange) error {
 
 }
 
-func (mq *MQ) queueDeclare(q *Queue) error {
+func (mq *MQ) QueueDeclare(q *Queue) error {
 	queue, err := mq.Channel.QueueDeclare(
 		q.Name,
 		q.Durable,
@@ -239,7 +239,7 @@ func (mq *MQ) queueDeclare(q *Queue) error {
 	return nil
 }
 
-func (mq *MQ) exchangeDeclare(e *Exchange) error {
+func (mq *MQ) ExchangeDeclare(e *Exchange) error {
 	if e.IsDeclare {
 		return nil
 	}
@@ -258,13 +258,13 @@ func (mq *MQ) exchangeDeclare(e *Exchange) error {
 	return err
 }
 
-func (mq *MQ) queueBind(q *Queue, e *Exchange) error {
+func (mq *MQ) QueueBind(q *Queue, e *Exchange) error {
 	if !e.IsDeclare {
-		mq.exchangeDeclare(e)
+		mq.ExchangeDeclare(e)
 	}
 	err := mq.Channel.QueueBind(
 		q.Name,
-		q.getKey(),
+		q.GetKey(),
 		e.Name,
 		false,
 		nil,

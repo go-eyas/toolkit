@@ -21,14 +21,14 @@ type Queue struct {
 	consumerChan chan *Message // 接收该队列数据的通道
 }
 
-func (q *Queue) replyTo() string {
+func (q *Queue) ReplyQueue() string {
 	if q.ReplyTo == nil {
 		return ""
 	}
 	return q.ReplyTo.Name
 }
 
-func (q *Queue) getKey() string {
+func (q *Queue) GetKey() string {
 	if q.Key == "" {
 		return q.Name
 	}
