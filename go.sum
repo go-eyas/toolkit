@@ -110,6 +110,8 @@ github.com/lestrrat-go/envload v0.0.0-20180220234015-a3eb8ddeffcc h1:RKf14vYWi2t
 github.com/lestrrat-go/envload v0.0.0-20180220234015-a3eb8ddeffcc/go.mod h1:kopuH9ugFRkIXf3YoqHKyrJ9YfUFsckUU9S7B+XP+is=
 github.com/lestrrat-go/file-rotatelogs v2.2.0+incompatible h1:eXEwY0f2h6mcobdAxm4VRSWds4tqmlLdUqxu8ybiEEA=
 github.com/lestrrat-go/file-rotatelogs v2.2.0+incompatible/go.mod h1:ZQnN8lSECaebrkQytbHj4xNgtg8CR7RYXnPok8e0EHA=
+github.com/lestrrat-go/file-rotatelogs v2.2.1-0.20190718000351-e0a88b0fe840+incompatible h1:GiGr0vZhS+DDQ3tzU/ZnceLBTV+11QvxetCQ0ggY0oo=
+github.com/lestrrat-go/file-rotatelogs v2.2.1-0.20190718000351-e0a88b0fe840+incompatible/go.mod h1:ZQnN8lSECaebrkQytbHj4xNgtg8CR7RYXnPok8e0EHA=
 github.com/lestrrat-go/strftime v0.0.0-20180821113735-8b31f9c59b0f h1:/o/LRlB6dBTBNViFglNdGfsDHBjdL8Yvfm7qQE4ZUh0=
 github.com/lestrrat-go/strftime v0.0.0-20180821113735-8b31f9c59b0f/go.mod h1:RMlXygAD3c48Psmr06d2G75L4E4xxzxkIe/+ppX9eAU=
 github.com/lestrrat-go/strftime v0.0.0-20190725011945-5c849dd2c51d h1:lNJ1yeRNN0HuKHMY+u10nvgd9cWUS1uXNRyyS4kVGYY=

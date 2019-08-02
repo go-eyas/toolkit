@@ -12,7 +12,7 @@ require (
 	github.com/gorilla/websocket v1.4.0
 	github.com/jinzhu/configor v1.1.0
 	github.com/jinzhu/gorm v1.9.10
-	github.com/lestrrat-go/file-rotatelogs v2.2.0+incompatible
+	github.com/lestrrat-go/file-rotatelogs v2.2.1-0.20190718000351-e0a88b0fe840+incompatible
 	github.com/lestrrat-go/strftime v0.0.0-20190725011945-5c849dd2c51d // indirect
 	github.com/lib/pq v1.1.1
 	github.com/mattn/go-sqlite3 v1.10.0
