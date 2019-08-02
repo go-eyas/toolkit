@@ -7,7 +7,7 @@ import (
 func TestLog(t *testing.T) {
 	err := Init(&LogConfig{
 		Level:   "debug",
-		Path:    ".runtime/logs",
+		Path:    ".logs",
 		Name:    "api",
 		Console: true,
 		Caller:  true,
