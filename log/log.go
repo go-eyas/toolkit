@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
@@ -139,7 +140,10 @@ func newLog(conf *LogConfig) error {
 func getWriter(filename string, conf *LogConfig) (io.Writer, error) {
 	hook, err := rotatelogs.New(
 		filename+".%Y-%m-%d.%H.log", // 没有使用go风格反人类的format格式
-		rotatelogs.WithLinkName(filepath.Base(filename)+".log"),
+		// rotatelogs.WithLinkName(linkName),
+		rotatelogs.WithHandler(&rotateHandler{
+			linkName: filename + ".log",
+		}),
 		rotatelogs.WithMaxAge(conf.MaxAge),
 		rotatelogs.WithRotationTime(conf.RotationTime),
 	)
@@ -148,4 +152,27 @@ func getWriter(filename string, conf *LogConfig) (io.Writer, error) {
 		return nil, err
 	}
 	return hook, nil
+}
+
+type rotateHandler struct {
+	linkName string
+}
+
+// 创建一个符号链接文件，链接到最新的日志文件，方便查看最新日志
+func (r *rotateHandler) Handle(e rotatelogs.Event) {
+	ev, ok := e.(*rotatelogs.FileRotatedEvent)
+	if ok {
+		_ = os.Remove(r.linkName)
+		current := ev.CurrentFile()
+		err := os.Symlink(filepath.Base(current), r.linkName)
+		if err != nil {
+			// 如果是windows，其实通常都是失败的，所以干脆不要在 win 显示错误了
+			if runtime.GOOS != "windows" {
+				fmt.Println(err)
+			}
+
+			return
+		}
+	}
+
 }
