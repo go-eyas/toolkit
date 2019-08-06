@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/parnurzeal/gorequest"
@@ -11,13 +12,12 @@ import (
 type requestMiddlewareHandler func(*Request) *Request
 type responseMidlewareHandler func(*Request, *Response) *Response
 
-// New 新建请求对象，默认useragent 为 chrome 75.0, 数据类型 json
+// New 新建请求对象，默认数据类型 json
 func New() *Request {
 	r := &Request{
 		SuperAgent: gorequest.New(),
 	}
-	r.Type("json")
-	r.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36")
+	r = r.Type("json")
 
 	return r
 }
@@ -96,7 +96,10 @@ func (r Request) BaseURL(url string) *Request {
 func (r Request) Do(method, url string, query, body, file interface{}) (*Response, error) {
 
 	// set mthod url
-	r.SuperAgent = r.SuperAgent.CustomMethod(method, r.baseURL+url)
+	// r.SuperAgent = r.SuperAgent.CustomMethod(method, r.baseURL+url)
+	r.SuperAgent.Method = strings.ToUpper(method)
+	r.SuperAgent.Url = url
+	r.SuperAgent.Errors = nil
 
 	// set query string
 	if query != nil {
