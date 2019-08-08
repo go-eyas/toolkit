@@ -113,3 +113,7 @@ func ByteToReader(b []byte) io.Reader {
 func ByteToReadCloser(b []byte) io.ReadCloser {
 	return ioutil.NopCloser(ByteToReader(b))
 }
+
+func BytesCombine(pBytes ...[]byte) []byte {
+	return bytes.Join(pBytes, []byte(""))
+}
