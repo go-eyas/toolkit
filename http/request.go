@@ -105,7 +105,7 @@ func (r Request) Do(method, url string, query, body, file interface{}) (*Respons
 			Errs:    []error{errors.New("url is empty")},
 		}, fmt.Errorf("http url can't empty")
 	}
-	r.SuperAgent = r.SuperAgent.CustomMethod(method, r.baseURL+url)
+	// r.SuperAgent = r.SuperAgent.CustomMethod(method, r.baseURL+url)
 	r.SuperAgent.Method = strings.ToUpper(method)
 	r.SuperAgent.Url = r.baseURL + url
 	r.SuperAgent.Errors = nil
