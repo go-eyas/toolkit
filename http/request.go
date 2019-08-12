@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -88,7 +89,7 @@ func (r Request) UseResponse(mdl responseMidlewareHandler) *Request {
 
 // BaseURL 设置url前缀
 func (r Request) BaseURL(url string) *Request {
-	r.baseURL = url
+	r.baseURL += url
 	return &r
 }
 
@@ -96,9 +97,17 @@ func (r Request) BaseURL(url string) *Request {
 func (r Request) Do(method, url string, query, body, file interface{}) (*Response, error) {
 
 	// set mthod url
-	// r.SuperAgent = r.SuperAgent.CustomMethod(method, r.baseURL+url)
+	if method == "" || url == "" {
+		return &Response{
+			Request: &r,
+			Raw:     nil,
+			Body:    []byte{},
+			Errs:    []error{errors.New("url is empty")},
+		}, fmt.Errorf("http url can't empty")
+	}
+	r.SuperAgent = r.SuperAgent.CustomMethod(method, r.baseURL+url)
 	r.SuperAgent.Method = strings.ToUpper(method)
-	r.SuperAgent.Url = url
+	r.SuperAgent.Url = r.baseURL + url
 	r.SuperAgent.Errors = nil
 
 	// set query string

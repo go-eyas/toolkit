@@ -14,9 +14,10 @@ func TestGet(t *testing.T) {
 		fmt.Printf("http 接收 %s %s\n", req.SuperAgent.Method, req.SuperAgent.Url)
 		return res
 	}).Timeout(time.Second * 10).
-		BaseURL("https://api.github.com")
+		BaseURL("https://api.github.com").
+		BaseURL("/repos")
 
-	res, err := http.Get("/repos/eyasliu/blog/issues", map[string]interface{}{
+	res, err := http.Get("/eyasliu/blog/issues", map[string]interface{}{
 		"per_page": 1,
 	})
 	if err != nil {
@@ -42,6 +43,13 @@ func TestError(t *testing.T) {
 	} else {
 		t.Fatalf("res: statusCode=%d body=%s", res.Status(), res.String())
 		panic("should get 404 error")
+	}
+
+	res, err = Get("", nil)
+	if err != nil {
+		t.Logf("success empty url, statusCode=%d body=%s error=%s", res.Status(), res.String(), err.Error())
+	} else {
+		panic("should error")
 	}
 
 }

@@ -72,17 +72,26 @@ func (r *Response) Byte() []byte {
 
 // Status 获取响应状态码
 func (r *Response) Status() int {
-	return r.Raw.StatusCode
+	if r.Raw != nil {
+		return r.Raw.StatusCode
+	}
+	return 0
 }
 
 // Header 获取响应header
 func (r *Response) Header() http.Header {
-	return r.Raw.Header
+	if r.Raw != nil {
+		return r.Raw.Header
+	}
+	return nil
 }
 
 // Cookies 获取响应 cookie
 func (r *Response) Cookies() []*http.Cookie {
-	return r.Raw.Cookies()
+	if r.Raw != nil {
+		return r.Raw.Cookies()
+	}
+	return nil
 }
 
 // IsError 是否响应错误
