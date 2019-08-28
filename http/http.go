@@ -8,52 +8,52 @@ import (
 var defaultRequest = New()
 
 // Type 请求提交方式，默认json
-func Type(name string) *Request {
+func Type(name string) Request {
 	return defaultRequest.Type(name)
 }
 
 // UserAgent 设置请求 user-agent，默认是 chrome 75.0
-func UserAgent(name string) *Request {
+func UserAgent(name string) Request {
 	return defaultRequest.UserAgent(name)
 }
 
 // Cookie 设置请求 Cookie
-func Cookie(c *http.Cookie) *Request {
+func Cookie(c *http.Cookie) Request {
 	return defaultRequest.Cookie(c)
 }
 
 // Header 设置请求 Header
-func Header(key, val string) *Request {
+func Header(key, val string) Request {
 	return defaultRequest.Header(key, val)
 }
 
 // Proxy 设置请求代理
-func Proxy(url string) *Request {
+func Proxy(url string) Request {
 	return defaultRequest.Proxy(url)
 }
 
 // Query 设置请求代理
-func Query(query interface{}) *Request {
+func Query(query interface{}) Request {
 	return defaultRequest.Query(query)
 }
 
 // Timeout 设置请求代理
-func Timeout(timeout time.Duration) *Request {
+func Timeout(timeout time.Duration) Request {
 	return defaultRequest.Timeout(timeout)
 }
 
 // UseRequest 增加请求中间件
-func UseRequest(mdl requestMiddlewareHandler) *Request {
+func UseRequest(mdl requestMiddlewareHandler) Request {
 	return defaultRequest.UseRequest(mdl)
 }
 
 // UseResponse 增加响应中间件
-func UseResponse(mdl responseMidlewareHandler) *Request {
+func UseResponse(mdl responseMidlewareHandler) Request {
 	return defaultRequest.UseResponse(mdl)
 }
 
 // BaseURL 设置url前缀
-func BaseURL(url string) *Request {
+func BaseURL(url string) Request {
 	return defaultRequest.BaseURL(url)
 }
 

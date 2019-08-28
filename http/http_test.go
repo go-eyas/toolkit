@@ -7,8 +7,8 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	http := Header("Authorization", "Bearer asfdfadsfdsfdasfds").UseRequest(func(req *Request) *Request {
-		fmt.Printf("http 发送 %s %s\n", req.SuperAgent.Method, req.SuperAgent.Url)
+	http := New().UseRequest(func(req *Request) *Request {
+		fmt.Printf("http 发送 %s %s header=%+v data=%+v\n", req.SuperAgent.Method, req.SuperAgent.Url, req.SuperAgent.Header, req.SuperAgent.Data)
 		return req
 	}).UseResponse(func(req *Request, res *Response) *Response {
 		fmt.Printf("http 接收 %s %s\n", req.SuperAgent.Method, req.SuperAgent.Url)
@@ -37,7 +37,14 @@ func TestGet(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
-	res, err := Get("https://api.github.com/repos/eyasliu/blog/issuesx", nil)
+	h := New().UseRequest(func(req *Request) *Request {
+		fmt.Printf("http 发送 %s %s header=%+v data=%+v\n", req.SuperAgent.Method, req.SuperAgent.Url, req.SuperAgent.Header, req.SuperAgent.Data)
+		return req
+	}).UseResponse(func(req *Request, res *Response) *Response {
+		fmt.Printf("http 接收 %s %s\n", req.SuperAgent.Method, req.SuperAgent.Url)
+		return res
+	})
+	res, err := h.Header("just-test", "1234").Get("https://api.github.com/repos/eyasliu/blog/issuesx", nil)
 	if err != nil {
 		t.Logf("get error success: statusCode=%d body=%s error=%s", res.Status(), res.String(), err.Error())
 	} else {
@@ -45,7 +52,7 @@ func TestError(t *testing.T) {
 		panic("should get 404 error")
 	}
 
-	res, err = Get("", nil)
+	res, err = h.Get("", nil)
 	if err != nil {
 		t.Logf("success empty url, statusCode=%d body=%s error=%s", res.Status(), res.String(), err.Error())
 	} else {
