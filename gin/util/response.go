@@ -73,6 +73,8 @@ func (r resp) Parse(v interface{}) *RData {
 		resMsg := e["msg"]
 		if resMsg == nil {
 			resMsg = "ok"
+		} else if errmsgError, ok := resMsg.(error); ok {
+			resMsg = errmsgError.Error()
 		}
 
 		resData := e["data"]
