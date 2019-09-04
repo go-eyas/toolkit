@@ -46,6 +46,7 @@ func (r Request) Clone() Request {
 	req := newRaw()
 	req.baseURL = r.baseURL
 	req.proxy = r.proxy
+	req.contentType = r.contentType
 
 	// query
 	for _, query := range r.querys {
