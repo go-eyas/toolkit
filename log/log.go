@@ -13,8 +13,10 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var SugaredLogger *zap.SugaredLogger
-var Logger *zap.Logger
+var defaultLogger = zap.New(zapcore.NewCore(zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()), zapcore.AddSync(os.Stdout), zap.DebugLevel))
+
+var SugaredLogger = defaultLogger.Sugar()
+var Logger = defaultLogger
 
 // LogConfig 日志配置
 type LogConfig struct {
