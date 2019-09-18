@@ -20,6 +20,7 @@ log.Init(&log.LogConfig{
 	Caller: true, // 是否输出打日志的文件和行号，会影响性能
 	MaxAge: time.Hour * 24 * 15, // 保存多久的日志，默认15天
 	RotationTime: time.Hour, // 多久分割一次日志，默认一小时
+    SplitLevel: true, // 是否把不同级别的日志打到不同文件，如果为false 则所有级别日志打到同一个文件
 })
 
 log.Debug("is debug log")

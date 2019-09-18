@@ -6,11 +6,12 @@ import (
 
 func TestLog(t *testing.T) {
 	err := Init(&LogConfig{
-		Level:   "debug",
-		Path:    ".logs",
-		Name:    "api",
-		Console: true,
-		Caller:  true,
+		Level:      "debug",
+		Path:       ".logs",
+		Name:       "api",
+		Console:    true,
+		Caller:     true,
+		SplitLevel: true,
 	})
 	if err != nil {
 		panic(err)

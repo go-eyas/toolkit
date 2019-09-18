@@ -25,6 +25,7 @@ type LogConfig struct {
 	MaxAge       time.Duration // 保存多久的日志，默认15天
 	RotationTime time.Duration // 多久分割一次日志
 	Caller       bool          // 是否打印文件行号
+	SplitLevel   bool          // 是否把不同级别的日志打到不同文件
 }
 
 var printCaller = false
@@ -74,57 +75,59 @@ func newLog(conf *LogConfig) error {
 
 	cores := []zapcore.Core{}
 
-	if lv <= zapcore.DebugLevel {
-		debugLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-			return lvl <= zapcore.DebugLevel
-		})
+	if conf.SplitLevel {
+		if lv <= zapcore.DebugLevel {
+			debugLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+				return lvl <= zapcore.DebugLevel
+			})
 
-		debugWriter, err := getWriter(conf.Path+"/"+conf.Name+"_debug", conf)
-		if err != nil {
-			return err
+			debugWriter, err := getWriter(conf.Path+"/"+conf.Name+"_debug", conf)
+			if err != nil {
+				return err
+			}
+			cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(debugWriter), debugLevel))
 		}
-		cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(debugWriter), debugLevel))
-	}
-	if lv <= zapcore.InfoLevel {
-		infoLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-			return lvl < zapcore.WarnLevel && lvl > zapcore.DebugLevel
-		})
+		if lv <= zapcore.InfoLevel {
+			infoLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+				return lvl < zapcore.WarnLevel && lvl > zapcore.DebugLevel
+			})
 
-		infoWriter, err := getWriter(conf.Path+"/"+conf.Name+"_info", conf)
-		if err != nil {
-			return err
+			infoWriter, err := getWriter(conf.Path+"/"+conf.Name+"_info", conf)
+			if err != nil {
+				return err
+			}
+
+			cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(infoWriter), infoLevel))
 		}
 
-		cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(infoWriter), infoLevel))
-	}
-
-	if lv <= zapcore.WarnLevel {
-		warnLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-			return lvl >= zapcore.WarnLevel
-		})
-		warnWriter, err := getWriter(conf.Path+"/"+conf.Name+"_error", conf)
-		if err != nil {
-			return err
+		if lv <= zapcore.WarnLevel {
+			warnLevel := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+				return lvl >= zapcore.WarnLevel
+			})
+			warnWriter, err := getWriter(conf.Path+"/"+conf.Name+"_error", conf)
+			if err != nil {
+				return err
+			}
+			cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(warnWriter), warnLevel))
+		} else {
+			// 级别是 error 以上
+			errorLevel := lv
+			errorWriter, err := getWriter(conf.Path+"/"+conf.Name+"_error", conf)
+			if err != nil {
+				return err
+			}
+			cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(errorWriter), errorLevel))
 		}
-		cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(warnWriter), warnLevel))
 	} else {
-		// 级别是 error 以上
-		errorLevel := lv
-		errorWriter, err := getWriter(conf.Path+"/"+conf.Name+"_error", conf)
+		writer, err := getWriter(conf.Path+"/"+conf.Name, conf)
 		if err != nil {
 			return err
 		}
-		cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(errorWriter), errorLevel))
+		cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(writer), lv))
 	}
 
 	if conf.Console {
 		consoleWriter := os.Stdout
-		//var consoleCore zapcore.Core
-		//if conf.DebugConsole {
-		//	consoleCore = zapcore.NewCore(encoder, zapcore.AddSync(consoleWriter), lv)
-		//} else {
-		//	consoleCore = zapcore.NewCore(encoder, zapcore.AddSync(consoleWriter), lv)
-		//}
 		cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(consoleWriter), lv))
 	}
 
