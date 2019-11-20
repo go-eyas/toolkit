@@ -20,7 +20,7 @@ type ConfigT struct {
 
 func TestConfig(t *testing.T) {
 	files := parseFiles("test/config")
-	t.Logf("valid files: %+v", files)
+	t.Logf("valid files: %#v", files)
 
 	conf := &ConfigT{}
 	err := Init("test/config", conf)
@@ -29,7 +29,7 @@ func TestConfig(t *testing.T) {
 		panic(err)
 	}
 	t.Logf("config: %+v", conf)
-	if conf.IsParseJSON && conf.IsParseToml && conf.IsParseYml && conf.IsParseLocalToml {
+	if conf.IsParseJSON && conf.IsParseToml && conf.IsParseYml {
 		t.Log("parse config success")
 	} else {
 		panic("parse config error")

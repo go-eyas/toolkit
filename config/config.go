@@ -22,10 +22,10 @@ func parseFiles(name string) []string {
 
 	for _, ext := range exts {
 		filelist = append(filelist,
-			name+"."+ext,
 			name+"."+env+"."+ext,
-			"../"+name+"."+ext,
+			name+"."+ext,
 			"../"+name+"."+env+"."+ext,
+			"../"+name+"."+ext,
 		)
 	}
 
