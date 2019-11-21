@@ -58,7 +58,7 @@ func newLog(conf *LogConfig) error {
 		EncodeLevel: zapcore.CapitalLevelEncoder,
 		TimeKey:     "ts",
 		EncodeTime: func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-			enc.AppendString(t.Format("2006-01-02 15:04:05"))
+			enc.AppendString(t.Format("2006-01-02 15:04:05.000"))
 		},
 		CallerKey:    "file",
 		EncodeCaller: zapcore.ShortCallerEncoder,
