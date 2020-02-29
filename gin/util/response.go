@@ -124,6 +124,9 @@ func (r resp) Err(v error) {
 
 func (r resp) Error(v interface{}) {
 	data := r.Parse(v)
+	if data.Code == 0 {
+		data.Code = 500
+	}
 	if data.Code == http.StatusOK {
 		data.Code = http.StatusInternalServerError
 	}
