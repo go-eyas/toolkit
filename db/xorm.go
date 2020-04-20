@@ -3,7 +3,7 @@ package db
 import (
 	// load mysql driver
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
+	"xorm.io/xorm"
 
 	// load postgresql driver
 	_ "github.com/lib/pq"
