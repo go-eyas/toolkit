@@ -16,17 +16,17 @@ type Config struct {
 }
 
 // redisClientInterface redis 实例拥有的功能
-type redisClientInterface interface {
-	redis.Cmdable
-	Subscribe(...string) *redis.PubSub
-	Close() error
-}
+// type redisClientInterface interface {
+// 	redis.Cmdable
+// 	Subscribe(...string) *redis.PubSub
+// 	Close() error
+// }
 
 // RedisClient redis client wrapper
 type RedisClient struct {
 	isCluster bool
 	Namespace string
-	Client    redisClientInterface
+	Client    redis.UniversalClient
 }
 
 // RedisTTL 默认有效期 24 小时
@@ -36,7 +36,7 @@ var RedisTTL = time.Hour * 24
 var Redis *RedisClient
 
 // redis 客户端实例
-var Client redisClientInterface
+var Client redis.UniversalClient
 
 // Init 初始化redis
 func Init(redisConf *Config) error {
