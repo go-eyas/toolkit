@@ -113,6 +113,19 @@ import "github.com/go-eyas/toolkit/gin/util" // 工具函数
 import "github.com/go-eyas/toolkit/gin/middleware" // 中间件
 ```
 
+# [事件分发器 Emitter](./emit)
+
+```go
+import "github.com/go-eyas/toolkit/emit"
+fn1 := func(data interface{}) {
+  fmt.Printf("fn1 receive data: %v", data)
+}
+
+emit.On("evt", fn1).Off("evt", fn1)
+emit.Emit("evt", "hello emitter")
+
+```
+
 # [工具函数 util](./util)
 
 ```go

@@ -6,6 +6,8 @@
 
 默认使用全局监听器，在全局范围的监听均有效，如果需要局部的事件分发，可使用 New 重新实例化一个，实例化的事件分发与全局的完全隔离
 
+支持链式操作
+
 #### New()
 
 重新实例化一个事件分发器
@@ -54,17 +56,16 @@ fn3 := func(data interface{}) {
   fmt.Printf("fn3 receive data: %v", data)
 }
 
-emit.On("evt", fn1)
-emit.On("evt", fn2, fn3)
-emit.Emit("evt", "hello emitter")
+emit.
+  On("evt", fn1).
+  On("evt", fn2, fn3).
+  Emit("evt", "hello emitter")
 
 emit.Off("evt", fn3)
-
 emit.Emit("evt", "hello emitter again")
 
 // or
-e := emit.New()
-e.On(...)
-e.Off(...)
+e := emit.New().On(...).Off(...)
+
 e.Emit(...)
 ```
