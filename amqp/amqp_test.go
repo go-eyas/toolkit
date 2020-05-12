@@ -16,7 +16,7 @@ func TestAmqp(t *testing.T) {
 	}
 
 	mq, err := New(&Config{
-		Addr:         "amqp://guest:guest@10.0.3.252:5672/",
+		Addr:         "amqp://guest:guest@10.0.2.252:5672/",
 		ExchangeName: "toolkit.exchange.test",
 	})
 	if err != nil {
@@ -56,7 +56,7 @@ func TestAmqp(t *testing.T) {
 func TestExchangePub(t *testing.T) {
 	queue := &Queue{Name: "toolkit.queue.test", Key: "toolkit.queue.*"}
 	mq, _ := New(&Config{
-		Addr:         "amqp://guest:guest@10.0.3.252:5672/",
+		Addr:         "amqp://guest:guest@10.0.2.252:5672/",
 		ExchangeName: "toolkit.exchange.test", // 直连交换机名称
 	})
 
@@ -97,10 +97,44 @@ func TestExchangePub(t *testing.T) {
 	wg.Wait()
 }
 
+func TestAmqpApp(t *testing.T) {
+	testQueue := &Queue{Name: "toolkit.queue.test", Key: "toolkit.queue.test"}
+	testReplyQueue := &Queue{Name: "ttoolkit.queue.reply.test", Key: "toolkit.queue.reply.test"}
+	mq, err := NewApp(&Config{
+		Addr:         "amqp://guest:guest@10.0.2.252:5672/",
+		ExchangeName: "toolkit.exchange.test", // 直连交换机名称
+	})
+
+	if err != nil {
+		t.Errorf("amqp error: %v", err)
+	}
+	var wg sync.WaitGroup
+	wg.Add(2)
+	mq.On(testQueue, func(c *MQContext) {
+		t.Log("mq listener here")
+		wg.Done()
+	})
+	mq.Route(map[*Queue]MQHandler{
+		testQueue: func(c *MQContext) {
+			body := map[string]interface{}{}
+			if err := c.BindJSON(&body); err != nil {
+				t.Errorf("bind error")
+				return
+			}
+			t.Logf("mq context here, data: %+v", body)
+			c.Pub(testReplyQueue, &Message{Data: []byte(`{"hello":"world"}`)})
+			wg.Done()
+		},
+	})
+
+	mq.Pub(testQueue, &Message{Data: []byte(`{"hello":"world"}`)})
+	wg.Wait()
+}
+
 func ExampleSimple() {
 	queue := &Queue{Name: "toolkit.queue.test", Key: "toolkit.queue.*"}
 	mq, _ := New(&Config{
-		Addr:         "amqp://guest:guest@10.0.3.252:5672/",
+		Addr:         "amqp://guest:guest@10.0.2.252:5672/",
 		ExchangeName: "toolkit.exchange.test", // 直连交换机名称
 	})
 	go func() {
