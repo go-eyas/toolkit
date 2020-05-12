@@ -33,18 +33,18 @@ type RedisClient struct {
 var RedisTTL = time.Hour * 24
 
 // Redis 暴露的redis封装
-var Redis *RedisClient
+// var Redis *RedisClient
 
 // redis 客户端实例
-var Client redis.UniversalClient
+// var Client redis.UniversalClient
 
 // Init 初始化redis
-func Init(redisConf *Config) error {
+func New(redisConf *Config) (*RedisClient, error) {
 	r := &RedisClient{}
 	r.isCluster = redisConf.Cluster
 
 	if len(redisConf.Addrs) == 0 {
-		return errors.New("empty addrs")
+		return nil, errors.New("empty addrs")
 	}
 
 	if redisConf.Cluster {
@@ -62,16 +62,16 @@ func Init(redisConf *Config) error {
 	_, err := r.Client.Ping().Result()
 	if err != nil {
 		log.Errorf("redis 连接失败, err=%v", err)
-		return err
+		return r, err
 	}
-	Redis = r
-	Client = r.Client
-	return nil
+	// Redis = r
+	// Client = r.Client
+	return r, nil
 }
 
 // Close 关闭redis连接
-func Close() {
-	if Redis != nil && Redis.Client != nil {
-		Redis.Client.Close()
+func (r *RedisClient) Close() {
+	if r != nil && r.Client != nil {
+		r.Client.Close()
 	}
 }

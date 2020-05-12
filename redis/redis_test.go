@@ -3,10 +3,12 @@ package redis
 import (
 	"testing"
 	"time"
+
+	"github.com/go-eyas/toolkit/types"
 )
 
 func TestRedisConnError(t *testing.T) {
-	err := Init(&Config{})
+	_, err := New(&Config{})
 	if err != nil {
 		t.Log("redis conn error success")
 	} else {
@@ -14,23 +16,26 @@ func TestRedisConnError(t *testing.T) {
 	}
 }
 func TestRedis(t *testing.T) {
-	Init(&Config{
+	r, err := New(&Config{
 		Cluster: false,
-		Addrs:   []string{"10.0.3.252:6379"},
+		Addrs:   []string{"10.0.2.252:6379"},
 		DB:      1,
 	})
+	if err != nil {
+		panic("redis connect fail")
+	}
 
 	key := "tookit:test"
 	val := `{"hello": "world"}`
 	data := "world"
 
 	// test Set
-	err := Set(key, val)
+	err = r.Set(key, val)
 	if err != nil {
 		panic("set redis fail")
 	}
 	// test Get
-	v, err := Get(key)
+	v, err := r.Get(key)
 	if err != nil {
 		panic("get redis fail")
 	}
@@ -39,7 +44,7 @@ func TestRedis(t *testing.T) {
 	res := struct {
 		Hello string `json:"hello"`
 	}{}
-	err = v.JSON(&res)
+	err = types.JSONString(v).JSON(&res)
 
 	if err == nil && res.Hello == data {
 		t.Log("get redis success")
@@ -48,12 +53,12 @@ func TestRedis(t *testing.T) {
 	}
 
 	// test Del
-	err = Del(key)
+	err = r.Del(key)
 	if err != nil {
 		panic("del redis key error")
 	}
-	v, err = Get(key)
-	if err == nil && v.String() == "" {
+	v, err = r.Get(key)
+	if err == nil && v == "" {
 		t.Log("del key success")
 	} else {
 		panic("get redis fail")
@@ -61,12 +66,12 @@ func TestRedis(t *testing.T) {
 
 	// test sub/pub
 	pbChan := make(chan *Message)
-	go Sub("tookit-pub", func(msg *Message) {
+	go r.Sub("tookit-pub", func(msg *Message) {
 		t.Logf("sub receive: %v", msg)
 		pbChan <- msg
 	})
 	<-time.After(time.Second)
-	err = Pub("tookit-pub", val)
+	err = r.Pub("tookit-pub", val)
 	if err != nil {
 		panic(err)
 	} else {
@@ -84,5 +89,4 @@ func TestRedis(t *testing.T) {
 	} else {
 		t.Logf("sub receive success: %v", res2)
 	}
-
 }
