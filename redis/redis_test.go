@@ -20,6 +20,7 @@ func TestRedis(t *testing.T) {
 		Cluster: false,
 		Addrs:   []string{"10.0.2.252:6379"},
 		DB:      1,
+		Prefix:  "test:prefix:",
 	})
 	if err != nil {
 		panic("redis connect fail")

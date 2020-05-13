@@ -13,6 +13,7 @@ type Config struct {
 	Addrs    []string
 	Password string
 	DB       int
+	Prefix   string
 }
 
 // redisClientInterface redis 实例拥有的功能
@@ -27,6 +28,7 @@ type RedisClient struct {
 	isCluster bool
 	Namespace string
 	Client    redis.UniversalClient
+	Prefix    string
 }
 
 // RedisTTL 默认有效期 24 小时
@@ -42,6 +44,7 @@ var RedisTTL = time.Hour * 24
 func New(redisConf *Config) (*RedisClient, error) {
 	r := &RedisClient{}
 	r.isCluster = redisConf.Cluster
+	r.Prefix = redisConf.Prefix
 
 	if len(redisConf.Addrs) == 0 {
 		return nil, errors.New("empty addrs")
