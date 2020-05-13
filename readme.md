@@ -35,16 +35,15 @@ log.Infof("is info log %s %d %v", "string", 123, map[string]string{"test": "hell
 ```go
 import "github.com/go-eyas/toolkit/redis"
 
-err := redis.Init(&redis.Config{
+r, err := redis.Init(&redis.Config{
   Cluster:  false, // 是否集群
-  Addrs:    []string{"10.0.3.252:6379"}, // redis 地址，如果是集群则在数组上写多个元素
+  Addrs:    []string{"127.0.0.1:6379"}, // redis 地址，如果是集群则在数组上写多个元素
   Password: "",
 	DB:       1,
 })
-redis.Set("tookit:test", `{"hello": "world"}`)
-res, err := redis.Get("toolkit:test")
-var data interface{}
-res.JSON(&data)
+r.Set("tookit:test", `{"hello": "world"}`)
+str, err := r.Get("toolkit:test")
+
 ```
 
 # [长连接 Websocket](./websocket)

@@ -11,7 +11,7 @@ func TestServer(t *testing.T) {
 		Addr:    ":6600",
 
 		// 解析私有协议为结构体，如果当前没有解析到，返回 error
-		Parser: func(bt []byte) (interface{}, error) {
+		Parser: func(conn *Conn, bt []byte) (interface{}, error) {
 			return nil, nil
 		},
 

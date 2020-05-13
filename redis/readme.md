@@ -9,7 +9,7 @@ import "github.com/go-eyas/toolkit/redis"
 
 func main() {
   // 使用前必须先初始化
-  err := redis.Init(&redis.Config{
+  r, err := redis.Init(&redis.Config{
     Cluster:  false, // 是否集群
     Addrs:    []string{"10.0.3.252:6379"}, // redis 地址，如果是集群则在数组上写多个元素
     Password: "",
@@ -19,16 +19,10 @@ func main() {
     panic(err)
   }
 
-  err = redis.Set("tookit:test", `{"hello": "world"}`)
+  err = r.Set("tookit:test", `{"hello": "world"}`)
 
-  v, err = redis.Get("tookit:test")
-  v.String() // {"hello": "world"}
-
-  data := struct {
-		Hello string `json:"hello"`
-	}{}
-  v.JSON(&data)
-  data.Hello // "world"
+  v, err = r.Get("tookit:test")
+  fmt.Printf("v: %s", v) // v: {"hello": "world"}
 
   err = redis.Del("tookit:test")
 
