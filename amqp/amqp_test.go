@@ -8,8 +8,8 @@ import (
 )
 
 func TestAmqp(t *testing.T) {
-	queue := &Queue{Name: "toolkit.queue.test"}
-	//exchange := &Exchange{Name: "toolkit.exchange.test"}
+	queue := &Queue{Name: "toolkit.queue1.test"}
+	// exchange := &Exchange{Name: "toolkit.exchange.test"}
 
 	msg := &Message{
 		Data: []byte("{\"seqno\":\"1563541319\",\"cmd\":\"44\",\"data\":{\"mid\":1070869}}"),
@@ -17,7 +17,7 @@ func TestAmqp(t *testing.T) {
 
 	mq, err := New(&Config{
 		Addr:         "amqp://guest:guest@10.0.2.252:5672/",
-		ExchangeName: "toolkit.exchange.test",
+		ExchangeName: "toolkit.exchange1.test",
 	})
 	if err != nil {
 		panic(err)
@@ -27,14 +27,15 @@ func TestAmqp(t *testing.T) {
 
 	startTime := time.Now()
 
-	var wg sync.WaitGroup
-	for i := 0; i < testCount; i++ {
+	wg := sync.WaitGroup{}
+	si := 0
+	for ; si < testCount; si++ {
 		err := mq.Pub(queue, msg)
 		if err != nil {
 			panic(err)
 		}
 	}
-	t.Logf("发送 %d 条数据, 耗时 %d 纳秒 \n", testCount, time.Since(startTime))
+	t.Logf("发送 %d 条数据, 耗时 %d 纳秒 \n", si, time.Since(startTime))
 
 	startTime1 := time.Now()
 	wg.Add(testCount)
@@ -54,16 +55,16 @@ func TestAmqp(t *testing.T) {
 }
 
 func TestExchangePub(t *testing.T) {
-	queue := &Queue{Name: "toolkit.queue.test", Key: "toolkit.queue.*"}
+	queue := &Queue{Name: "toolkit.queue.test2", Key: "toolkit.queue2.*"}
 	mq, _ := New(&Config{
 		Addr:         "amqp://guest:guest@10.0.2.252:5672/",
-		ExchangeName: "toolkit.exchange.test", // 直连交换机名称
+		ExchangeName: "toolkit.exchange.test2", // 直连交换机名称
 	})
 
 	count := 100
 
-	var wg sync.WaitGroup
-	wg.Add(count)
+	wg2 := sync.WaitGroup{}
+	wg2.Add(count)
 	go func() {
 		msgs, err := mq.Sub(queue)
 		if err != nil {
@@ -75,15 +76,15 @@ func TestExchangePub(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			wg.Done()
-			fmt.Printf("msg: %s \n", v)
+			wg2.Done()
+			// fmt.Printf("msg: %s \n", v)
 		}
 	}()
 
 	<-time.After(100 * time.Millisecond)
 
 	msg := &Message{
-		Data: []byte("{\"seqno\":\"1563541319\",\"cmd\":\"44\",\"data\":{\"mid\":1070869}}"),
+		Data: []byte(`{"seqno":"1563541319","cmd":"44","data":{"uid":1070869}}`),
 	}
 	ex := &Exchange{Name: "toolkit.ex.test.fanout", Kind: ExchangeFanout, AutoDelete: true}
 
@@ -94,15 +95,15 @@ func TestExchangePub(t *testing.T) {
 		}
 	}
 
-	wg.Wait()
+	wg2.Wait()
 }
 
 func TestAmqpApp(t *testing.T) {
-	testQueue := &Queue{Name: "toolkit.queue.test", Key: "toolkit.queue.test"}
-	testReplyQueue := &Queue{Name: "ttoolkit.queue.reply.test", Key: "toolkit.queue.reply.test"}
+	testQueue := &Queue{Name: "toolkit.queue.test3", Key: "toolkit.queue.test3"}
+	testReplyQueue := &Queue{Name: "ttoolkit.queue.reply.test3", Key: "toolkit.queue.reply.test3"}
 	mq, err := NewApp(&Config{
 		Addr:         "amqp://guest:guest@10.0.2.252:5672/",
-		ExchangeName: "toolkit.exchange.test", // 直连交换机名称
+		ExchangeName: "toolkit.exchange.test3", // 直连交换机名称
 	})
 
 	if err != nil {
