@@ -4,13 +4,13 @@ import (
 	// load mysql driver
 	_ "github.com/go-sql-driver/mysql"
 	"xorm.io/xorm"
+	"xorm.io/xorm/log"
 
 	// load postgresql driver
 	_ "github.com/lib/pq"
 
 	// load mssql
 	_ "github.com/denisenkom/go-mssqldb"
-	"xorm.io/core"
 )
 
 type xormLogger struct {
@@ -49,11 +49,11 @@ func (xl *xormLogger) Errorf(f string, v ...interface{}) {
 	xl.logger.Errorf(f, v...)
 }
 
-func (xl *xormLogger) Level() core.LogLevel {
+func (xl *xormLogger) Level() log.LogLevel {
 	return 0
 }
 
-func (xl *xormLogger) SetLevel(l core.LogLevel) {
+func (xl *xormLogger) SetLevel(l log.LogLevel) {
 }
 
 func (xl *xormLogger) ShowSQL(b ...bool) {
@@ -74,8 +74,8 @@ func Xorm(conf *Config) (*xorm.Engine, error) {
 	if conf.Debug {
 		db.ShowSQL(conf.Debug)
 		if conf.Logger != nil {
-			log := &xormLogger{conf.Logger}
-			db.SetLogger(log)
+			logger := log.NewLoggerAdapter(&xormLogger{conf.Logger})
+			db.SetLogger(logger)
 		}
 	}
 
