@@ -20,6 +20,7 @@ require (
 	github.com/lestrrat-go/strftime v1.0.1 // indirect
 	github.com/lib/pq v1.5.2
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
+	github.com/novalagung/gubrak v1.0.0
 	github.com/parnurzeal/gorequest v0.2.16
 	github.com/rs/xid v1.2.1
 	github.com/smartystreets/goconvey v1.6.4 // indirect

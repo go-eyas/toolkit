@@ -15,3 +15,7 @@ type Logger interface {
 	Error(...interface{})
 	Errorf(string, ...interface{})
 }
+
+type ViewModel interface{
+	From() string
+}

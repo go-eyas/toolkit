@@ -41,6 +41,43 @@ func main() {
 }
 ```
 
+## 视图 View
+在支持视图的数据库，可使用 `db.GormViewMigrate` 或 `db.XormViewMigrate` 用于创建视图，视图的字段名称映射和 model 一致
+
+视图的模型要实现接口
+
+```go
+type ViewModel interface{
+	From() string // From 返回 创建视图时的 FROM 部分语句
+}
+```
+
+```go
+type User struct {
+  ID int64
+  UserName string
+  Status byte
+}
+type Company struct {
+  UID int64
+  CompanyName string
+}
+
+type UserCompany struct {
+  *User
+  *Company
+}
+
+func (UserView) From() string {
+  return "FROM users JOIN company ON company.uid = users.uid"
+}
+
+db.GormViewMigrate(DB, &UserCompany{})
+
+DB.Model(UserCompany{}).Where("id = ?", 1).Find(&userCompany)
+```
+
+
 ## 驱动 
 
 初始化的时候，配置项为 

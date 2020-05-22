@@ -1,8 +1,11 @@
 package db
 
 import (
+	"fmt"
 	"github.com/jinzhu/gorm"
+	"strings"
 	"time"
+	"github.com/novalagung/gubrak"
 
 	// load drivers
 	_ "github.com/jinzhu/gorm/dialects/mssql"
@@ -20,7 +23,6 @@ func (l *gormLogger) Print(v ...interface{}) {
 	if level == "sql" {
 		tm := v[2].(time.Duration)
 		sql := v[3]
-		//不能用log.Println,因为这样log会混乱重合在一起
 		l.logger.Debug("SQL [", v[5], " rows][", tm.String(), "]: ", sql, " <-- ", v[4])
 	} else {
 		l.logger.Debug(v...)
@@ -43,4 +45,32 @@ func Gorm(conf *Config) (*gorm.DB, error) {
 	}
 
 	return db, nil
+}
+
+func GormViewMigrate(db *gorm.DB, v ...ViewModel) {
+	for _, m := range v {
+		if db.HasTable(m) {
+			continue
+		}
+		var tags []string
+		scope := db.NewScope(m)
+		ms := scope.GetModelStruct()
+		for _, field := range ms.StructFields {
+			if !field.IsIgnored {
+				tags = append(tags, scope.Quote(field.DBName))
+			}
+		}
+
+		// 去掉重复字段
+		_tags, _ := gubrak.Filter(tags, func(s string) bool {
+			res, _ := gubrak.Find(tags, func(i string) bool {
+				index := strings.LastIndex(i, "."+s)
+				return index != -1
+			})
+			return res == nil
+		})
+		tags = _tags.([]string)
+
+		db.Exec(fmt.Sprintf("CREATE VIEW %v AS SELECT %s %s", scope.QuotedTableName(), strings.Join(tags, ","), m.From()))
+	}
 }
