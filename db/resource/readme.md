@@ -58,7 +58,8 @@ func main() {
   err = r.Delete(1)
 
   /******* get one resource ********/
-  err = r.Detail(1)
+  article := &Article{}
+  err = r.Detail(1, article)
 
   /******* list resource ********/
   list := []*Article{}
