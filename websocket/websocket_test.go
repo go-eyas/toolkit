@@ -47,7 +47,8 @@ window.addEventListener("load", function(evt) {
         if (ws) {
             return false;
         }
-        ws = new WebSocket("{{.}}");
+        var addr = document.getElementById("addr").value
+        ws = new WebSocket(addr);
         ws.onopen = function(evt) {
             print("OPEN");
         }
@@ -89,6 +90,9 @@ window.addEventListener("load", function(evt) {
 You can change the message and send multiple times.
 <p>
 <form>
+<p>addr: 
+<input id="addr" type="text" value="{{.}}">
+</p>
 <button id="open">Open</button>
 <button id="close">Close</button>
 <p><input id="input" type="text" value="Hello world!">
