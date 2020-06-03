@@ -49,7 +49,7 @@ func New(conf *Config) *WS {
 		WriteBufferSize: conf.WriteBufferSize,
 		CheckOrigin:     conf.CheckOrigin,
 	}
-	logger.Logf("websocket: init websocket")
+	logger.Info("websocket: init websocket")
 
 	return ws
 }
@@ -84,7 +84,7 @@ func (ws *WS) HTTPHandler(w http.ResponseWriter, r *http.Request) {
 		id: ws.id,
 	}
 
-	logger.Logf("websocket: new websocket connect create: %d", conn.id)
+	logger.Infof("websocket: new websocket connect create: %d", conn.id)
 
 	connMu.Lock()
 	ws.Clients[conn.id] = conn
@@ -118,5 +118,5 @@ func (ws *WS) destroyConn(cid uint64) {
 	connMu.Lock()
 	delete(ws.Clients, cid)
 	connMu.Unlock()
-	logger.Log("websocket: destroy ws connect")
+	logger.Info("websocket: destroy ws connect")
 }

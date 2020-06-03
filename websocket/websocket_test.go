@@ -8,7 +8,7 @@ import (
 
 func TestWS(t *testing.T) {
 	ws := New(&Config{
-		Logger: t,
+		Logger: logger,
 	})
 
 	http.HandleFunc("/ws", ws.HTTPHandler)

@@ -23,7 +23,7 @@ func (c *Conn) reader() error {
 		if err != nil {
 			return err
 		}
-		logger.Logf("websocket: receive data=%s", string(mRaw))
+		logger.Infof("websocket: receive data=%s", string(mRaw))
 		msg := &Message{c.id, mRaw, c.ws, c, mType}
 		c.ws.recC <- msg
 	}

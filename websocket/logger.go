@@ -1,16 +1,16 @@
 package websocket
 
 type loggerI interface {
-	Log(...interface{})
-	Logf(string, ...interface{})
+	Info(...interface{})
+	Infof(string, ...interface{})
 	Error(...interface{})
 	Errorf(string, ...interface{})
 }
 
 type l struct{}
 
-func (l) Log(v ...interface{})              {}
-func (l) Logf(s string, v ...interface{})   {}
+func (l) Info(v ...interface{})             {}
+func (l) Infof(s string, v ...interface{})  {}
 func (l) Error(v ...interface{})            {}
 func (l) Errorf(s string, v ...interface{}) {}
 
