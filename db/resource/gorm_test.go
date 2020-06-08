@@ -3,6 +3,7 @@ package resource
 import (
   "github.com/go-eyas/toolkit/db"
   "github.com/jinzhu/gorm"
+  "os"
   "testing"
 )
 
@@ -17,7 +18,7 @@ func testDB() *gorm.DB {
   DB, err := db.Gorm(&db.Config{
     Debug:  true,
     Driver: "mysql",
-    URI:    "root:eyas8825345liu@(111.230.219.41:3306)/toolkit_test",
+    URI:    os.Getenv("DB"),
   })
   if err != nil {
     panic(err)

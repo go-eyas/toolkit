@@ -3,6 +3,7 @@ package db
 import (
   "github.com/go-eyas/toolkit/log"
   "github.com/jinzhu/gorm"
+  "os"
   "testing"
 )
 
@@ -27,7 +28,7 @@ func TestGorm(t *testing.T) {
   db, err := Gorm(&Config{
     Debug:  true,
     Driver: "mysql",
-    URI:    "root:123456@(10.0.2.252:3306)/test",
+    URI:    os.Getenv("DB"),
     Logger: log.SugaredLogger,
   })
   if err != nil {

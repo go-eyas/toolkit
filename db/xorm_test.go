@@ -2,6 +2,7 @@ package db
 
 import (
 	"github.com/go-eyas/toolkit/log"
+	"os"
 	"testing"
 )
 
@@ -9,7 +10,7 @@ func TestXorm(t *testing.T) {
 	db, err := Xorm(&Config{
 		Debug:  true,
 		Driver: "mysql",
-		URI:    "root:123456@(10.0.2.252:3306)/test",
+		URI:    os.Getenv("DB"),
 		Logger: log.SugaredLogger,
 	})
 	if err != nil {
