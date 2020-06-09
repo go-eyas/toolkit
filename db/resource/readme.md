@@ -109,6 +109,7 @@ type Article struct {
 tag 的 key 为 `resource`，每队键值使用 `:` 定义，以 `;` 分隔
 
 |key|默认值|说明|
+| ---: | :--- | :--- |
 |pk| false | 是否为主键|
 |search|=| 该字段的查询类型，sql语句的 where 匹配关系，为 `-` 时该字段不可作为查询条件|
 |order|-|查询时默认的排序规则|
@@ -117,6 +118,19 @@ tag 的 key 为 `resource`，每队键值使用 `:` 定义，以 `;` 分隔
 
 
 ### API 函数
+
+#### resource.New(conf *db.Config, model interface{}) (*Resource, *gorm.DB, error)
+
+使用数据库配置创建资源实例
+
+ * conf 数据库配置 `github.com/go-eyas/toolkit/db.Config`
+ * model 资源模型
+ 
+返回
+ 
+ * *Resource 资源实例
+ * *gorm.DB gorm 实例
+ * error 错误对象
 
 #### resource.NewGormResource(db *gorm.DB, model interface{}) error
 

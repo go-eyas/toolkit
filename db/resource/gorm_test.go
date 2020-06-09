@@ -14,12 +14,14 @@ type Article struct {
   Status  byte   `resource:"search:=" json:"-"`
 }
 
+var dbConfig = &db.Config{
+  Debug:  true,
+  Driver: "mysql",
+  URI:    os.Getenv("DB"),
+}
+
 func testDB() *gorm.DB {
-  DB, err := db.Gorm(&db.Config{
-    Debug:  true,
-    Driver: "mysql",
-    URI:    os.Getenv("DB"),
-  })
+  DB, err := db.Gorm(dbConfig)
   if err != nil {
     panic(err)
   }
@@ -27,12 +29,14 @@ func testDB() *gorm.DB {
 }
 
 func TestCreate(t *testing.T) {
-  DB := testDB()
-  r := NewGormResource(DB, Article{})
+  r, DB, err := New(dbConfig, Article{})
+  if err != nil {
+    panic(err)
+  }
   DB.AutoMigrate(&Article{})
 
   //   create by struct
-  err := r.Create(&Article{
+  err = r.Create(&Article{
     Title:   "测试文章 origin",
     Content: "文章的内容",
   })
