@@ -1,7 +1,5 @@
 # Resource 资源自动维护、检索
 
-**not finish yet 还没完成**
-
 基于 Gorm API，根据 Restful API 设计对资源进行维护并检索
 
 简单说就是：自动 curd
