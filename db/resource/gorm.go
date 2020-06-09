@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/jinzhu/gorm"
 	"reflect"
@@ -82,11 +83,43 @@ func (r *Resource) Detail(pk interface{}, v interface{}) error {
 func (r *Resource) List(slice interface{}, args ...interface{}) (int64, error) {
 	switch len(args) {
 	case 0:
-		return r.listQuery(slice, nil, nil)
+		return r.listQuery(slice, nil, nil, nil)
 	case 1:
-		return r.listQuery(slice, args[0], nil)
+		page := &Pagination{}
+		query := args[0]
+		raw, err := json.Marshal(query)
+		if err != nil {
+		  return 0, errors.New("query parse error")
+		}
+		err = json.Unmarshal(raw, page)
+		if err != nil {
+		  return 0, errors.New("query parse error")
+		}
+		return r.listQuery(slice, page, query, nil)
 	case 2:
-		return r.listQuery(slice, args[0], args[1])
+		page := &Pagination{}
+		query := args[0]
+		raw, err := json.Marshal(query)
+		if err != nil {
+			return 0, errors.New("query parse error")
+		}
+		err = json.Unmarshal(raw, page)
+		if err != nil {
+			return 0, errors.New("query parse error")
+		}
+		return r.listQuery(slice, page, args[0], args[1])
+	}
+	return 0, errors.New("list param error")
+}
+
+func (r *Resource) ListPage(slice interface{}, page *Pagination, args ...interface{}) (int64, error) {
+	switch len(args) {
+	case 0:
+		return r.listQuery(slice, nil, nil, nil)
+	case 1:
+		return r.listQuery(slice, page, args[0], nil)
+	case 2:
+		return r.listQuery(slice, page, args[0], args[1])
 	}
 	return 0, errors.New("list param error")
 }

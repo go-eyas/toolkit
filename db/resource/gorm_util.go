@@ -1,8 +1,6 @@
 package resource
 
 import (
-  "encoding/json"
-  "errors"
   "fmt"
   "github.com/jinzhu/gorm"
   "reflect"
@@ -210,7 +208,7 @@ func (r *Resource) parseOrderArgs(order interface{}) []string {
   return args
 }
 
-type pagination struct {
+type Pagination struct {
   Offset int
   Limit  int
 }
@@ -221,17 +219,17 @@ type queryArg struct {
   SearchType  string // 查询类型
 }
 
-func (r *Resource) listQuery(slice interface{}, query interface{}, order interface{}) (int64, error) {
-  page := &pagination{}
-  raw, err := json.Marshal(query)
-  if err != nil {
-    return 0, errors.New("query parse error")
-  }
-  err = json.Unmarshal(raw, page)
-  if err != nil {
-    return 0, errors.New("query parse error")
-  }
+func (r *Resource) listQuery(slice interface{}, page *Pagination, query interface{}, order interface{}) (int64, error) {
+  // raw, err := json.Marshal(query)
+  // if err != nil {
+  //   return 0, errors.New("query parse error")
+  // }
+  // err = json.Unmarshal(raw, page)
+  // if err != nil {
+  //   return 0, errors.New("query parse error")
+  // }
 
+  var err error
   queryArgs := r.parseQueryArgs(query)
   q := r.model
   for _, arg := range queryArgs {
@@ -253,11 +251,13 @@ func (r *Resource) listQuery(slice interface{}, query interface{}, order interfa
     return 0, err
   }
 
-  if page.Offset != 0 {
-    q = q.Offset(page.Offset)
-  }
-  if page.Limit != 0 {
-    q = q.Limit(page.Limit)
+  if page != nil {
+    if page.Offset != 0 {
+      q = q.Offset(page.Offset)
+    }
+    if page.Limit != 0 {
+      q = q.Limit(page.Limit)
+    }
   }
 
   err = q.Find(slice).Error
