@@ -1,9 +1,9 @@
 package resource
 
 import (
+	"errors"
 	"github.com/jinzhu/gorm"
-	"net/http"
-	"strings"
+	"reflect"
 )
 
 type Field struct {
@@ -26,85 +26,27 @@ type Resource struct {
 	pk        string
 	sample    interface{}
 	Fields    []*Field
-}
-
-func parseFields(scope *gorm.Scope) ([]*Field, string) {
-	gormFields := scope.Fields()
-	fields := make([]*Field, len(gormFields))
-
-	pk := scope.PrimaryKey()
-
-	for i, f := range gormFields {
-		field := &Field{
-			// 默认值
-			StructKey: f.Name,
-			ColumnName:   f.DBName,
-			JsonKey:      f.Name,
-			Search:       "=",
-			Order:        "DESC",
-			isPrimaryKey: pk == f.DBName,
-		}
-		fields[i] = field
-		tags := f.StructField.Tag
-		// json tag
-		jsonTag := tags.Get("json")
-		if jsonTag != "" {
-			field.JsonKey = jsonTag
-		} else if jsonTag == "-" {
-			field.JsonKey = ""
-		}
-
-		// parse resource tag
-		resourceTag := tags.Get("resource")
-
-		// 为空，全为默认值
-		if resourceTag == "" {
-			continue
-		}
-		// 忽略
-		if resourceTag == "-" {
-			field.isIgnore = true
-		}
-		tagList := strings.Split(resourceTag, ";")
-
-		for _, value := range tagList {
-			p := strings.Split(value, ":")
-			k := strings.TrimSpace(strings.ToUpper(p[0]))
-			v := ""
-			if len(p) >= 2 {
-				v = strings.Join(p[1:], ":")
-			}
-			switch k {
-			case "PK":
-				pk = field.ColumnName
-				field.isPrimaryKey = true
-			case "SEARCH":
-				field.Search = strings.ToUpper(v)
-			case "ORDER":
-				field.Order = strings.ToUpper(v)
-			case "CREATE":
-				field.Create = true
-			case "UPDATE":
-				field.Update = true
-			}
-		}
-
-	}
-	return fields, pk
+	fieldsStructKeyMap map[string]*Field
 }
 
 func NewGormResource(db *gorm.DB, v interface{}) *Resource {
 	scope := db.NewScope(v)
-	fields, pk := parseFields(scope)
-	return &Resource{
+	r := &Resource{
 		sample:    v,
 		db:        db,
 		tableName: scope.TableName(),
 		model:     db.Table(scope.TableName()),
 		scope:     scope,
-		pk:        pk,
-		Fields:    fields,
 	}
+	fields, pk := r.parseFields(scope)
+	r.Fields = fields
+	r.pk = pk
+	keyMap := map[string]*Field{}
+	for _, field := range fields {
+		keyMap[field.StructKey] = field
+	}
+	r.fieldsStructKeyMap = keyMap
+	return r
 }
 
 func (r *Resource) Row(pk interface{}) *gorm.DB {
@@ -112,7 +54,23 @@ func (r *Resource) Row(pk interface{}) *gorm.DB {
 }
 
 func (r *Resource) Create(v interface{}) error {
-	return r.model.Create(v).Error
+	var model interface{}
+	rv := reflect.ValueOf(v)
+
+	if rv.Kind() == reflect.Ptr {
+		rv = rv.Elem()
+	}
+
+	switch rv.Kind() {
+	case reflect.Struct:
+		model = v
+	case reflect.Map:
+		model = r.mapToCreateStruct(v)
+
+	default:
+		return errors.New("create unsupport type")
+	}
+	return r.model.Create(model).Error
 }
 func (r *Resource) Update(pk interface{}, v interface{}) error {
 	return r.Row(pk).Updates(v).Error
@@ -121,15 +79,24 @@ func (r *Resource) Update(pk interface{}, v interface{}) error {
 func (r *Resource) Detail(pk interface{}, v interface{}) error {
 	return r.Row(pk).First(v).Error
 }
-func (r *Resource) List(v interface{}, slice interface{}) (int64, error) {
-	return 0, nil
+func (r *Resource) List(slice interface{}, args ...interface{}) (int64, error) {
+	switch len(args) {
+	case 0:
+		return r.listQuery(slice, nil, nil)
+	case 1:
+		return r.listQuery(slice, args[0], nil)
+	case 2:
+		return r.listQuery(slice, args[0], args[1])
+	}
+	return 0, errors.New("list param error")
 }
+
 func (r *Resource) Delete(pk interface{}) error {
 	return r.model.Delete(r.sample, r.pk+" = ?", pk).Error
 }
-func (r *Resource) CreateHandle(res http.ResponseWriter, req http.Request) {
-
-}
-func (r *Resource) UpdateHandle(res http.ResponseWriter, req http.Request) {}
-func (r *Resource) QueryHandle(res http.ResponseWriter, req http.Request)  {}
-func (r *Resource) DeleteHandle(res http.ResponseWriter, req http.Request) {}
+// func (r *Resource) CreateHandle(res http.ResponseWriter, req http.Request) {
+//
+// }
+// func (r *Resource) UpdateHandle(res http.ResponseWriter, req http.Request) {}
+// func (r *Resource) QueryHandle(res http.ResponseWriter, req http.Request)  {}
+// func (r *Resource) DeleteHandle(res http.ResponseWriter, req http.Request) {}

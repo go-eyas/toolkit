@@ -105,6 +105,38 @@ var db *xorm.Engine = db.Xorm(&db.Config{"mysql", "username:password@127.0.0.1:3
 defer db.Close()
 ```
 
+# [资源模型CRUD](./db/resource)
+
+资源自动 crud
+
+```go
+import "github.com/go-eyas/toolkit/db"
+import "github.com/go-eyas/toolkit/db/resource"
+
+type Article struct {
+  ID      int64  `resource:"pk;search:none"`
+  Title   string `resource:"create;update;search:like"`
+  Status  byte   `resource:"search:="`
+}
+
+var db *gorm.DB = db.Gorm(&db.Config{"mysql", "username:password@127.0.0.1:3306/test"})
+var r =  resource.NewGormResource(db, Article)
+
+r.Create(map[string]string{"title": "hello eyas"}) // 增
+r.Delete(1) // 删
+r.Update(1, map[string]int{"status": 1}) // 改
+
+// 查，指定主键
+var m = &Article{}
+r.Detail(1, m)
+
+// 查，指定查询条件查列表
+var list = []*Article{}
+r.List(&list, map[string]interface{}{"title": "he"}, []string{"id DESC"})
+
+
+```
+
 # [Gin 中间件 & 工具](./gin)
 
 ```go
