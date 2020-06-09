@@ -120,7 +120,7 @@ type Article struct {
 }
 
 var db *gorm.DB = db.Gorm(&db.Config{"mysql", "username:password@127.0.0.1:3306/test"})
-var r =  resource.NewGormResource(db, Article)
+var r =  resource.NewGormResource(db, Article{})
 
 r.Create(map[string]string{"title": "hello eyas"}) // 增
 r.Delete(1) // 删
