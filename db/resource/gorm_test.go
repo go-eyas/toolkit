@@ -39,6 +39,16 @@ func TestCreate(t *testing.T) {
   err = r.Create(&Article{
     Title:   "测试文章 origin",
     Content: "文章的内容",
+    Status: 3,
+  })
+  if err != nil {
+    panic(err)
+  }
+
+  err = r.CreateX(&Article{
+    Title:   "测试文章 origin",
+    Content: "文章的内容",
+    Status: 3,
   })
   if err != nil {
     panic(err)
@@ -48,9 +58,24 @@ func TestCreate(t *testing.T) {
   err = r.Create(&struct {
     Title   string
     Content string
+    Status byte
   }{
     Title:   "测试文章 tmp struct",
     Content: "文章的内容",
+    Status: 4,
+  })
+  if err != nil {
+    panic(err)
+  }
+
+  err = r.CreateX(&struct {
+    Title   string
+    Content string
+    Status byte
+  }{
+    Title:   "测试文章 tmp struct",
+    Content: "文章的内容",
+    Status: 4,
   })
   if err != nil {
     panic(err)
@@ -60,6 +85,15 @@ func TestCreate(t *testing.T) {
   err = r.Create(map[string]interface{}{
     "title":   "测试文章 map",
     "content": "文章的内容",
+    "status": byte(5),
+  })
+  if err != nil {
+    panic(err)
+  }
+  err = r.CreateX(map[string]interface{}{
+    "title":   "测试文章 map",
+    "content": "文章的内容",
+    "status": byte(0),
   })
   if err != nil {
     panic(err)
@@ -87,17 +121,37 @@ func TestUpdate(t *testing.T) {
   if err != nil {
     panic(err)
   }
-  err = r.Update(testModel.ID, &Article{Status: 2})
+  err = r.Update(testModel.ID, &Article{Status: 2, Title: "修改后标题 origin"})
+  if err != nil {
+    panic(err)
+  }
+  err = r.UpdateX(testModel.ID, &Article{Status: 2, Title: "修改后标题 origin"})
   if err != nil {
     panic(err)
   }
 
-  err = r.Update(testModel.ID, &struct{ Status int }{Status: 3})
+  err = r.Update(testModel.ID, &struct{
+    Status byte
+    Title string
+  }{Status: 3, Title: "修改后标题 tmp"})
   if err != nil {
     panic(err)
   }
 
-  err = r.Update(testModel.ID, map[string]byte{"status": 0})
+  err = r.UpdateX(testModel.ID, &struct{
+    Status byte
+    Title string
+  }{Status: 3, Title: "修改后标题 tmp"})
+  if err != nil {
+    panic(err)
+  }
+
+  err = r.Update(testModel.ID, map[string]interface{}{"status": byte(4), "content": "修改后内容 map"})
+  if err != nil {
+    panic(err)
+  }
+
+  err = r.UpdateX(testModel.ID, map[string]interface{}{"status": byte(0), "content": "修改后内容 map"})
   if err != nil {
     panic(err)
   }
@@ -201,6 +255,14 @@ func TestList(t *testing.T) {
   }
 
   list = []*Article{}
+  total, err = r.List(&list, nil, []string{"id ASC"})
+  if err != nil {
+    panic(err)
+  } else {
+    t.Logf("total=%d  list=%+v", total, list)
+  }
+
+  list = []*Article{}
   total, err = r.List(&list, nil, map[string]interface{}{
     "id":       "desc",
     "status":   "Asc",
@@ -227,9 +289,6 @@ func TestList(t *testing.T) {
   total, err = r.List(&list, map[string]int{
     "offset": 10,
     "limit":  10,
-  }, map[string]string{
-    "id":     "desc",
-    "status": "Asc",
   })
   if err != nil {
     panic(err)

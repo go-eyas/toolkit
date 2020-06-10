@@ -1,6 +1,7 @@
 package resource
 
 import (
+  "errors"
   "fmt"
   "github.com/jinzhu/gorm"
   "reflect"
@@ -21,7 +22,7 @@ func (r *Resource) parseFields(scope *gorm.Scope) ([]*Field, string) {
       ColumnName:   f.DBName,
       JsonKey:      f.Name,
       Search:       "=",
-      Order:        "DESC",
+      Order:        "-",
       isPrimaryKey: pk == f.DBName,
     }
     fields[i] = field
@@ -82,33 +83,108 @@ func (r *Resource) newModel() reflect.Value {
   return dest
 }
 
-// 暂时用json先顶着用，以后再扩展 column 识别
-func (r *Resource) mapToCreateStruct(mapValue interface{}) interface{} {
-  dest := r.newModel()
-  rv := reflect.ValueOf(mapValue)
+
+func (r *Resource) toCreateStruct(v interface{}, protectField bool) (interface{}, error) {
+  rv := reflect.ValueOf(v)
+
+  if rv.Kind() == reflect.Ptr {
+    rv = rv.Elem()
+  }
+
+  if rv.Kind() != reflect.Map && rv.Kind() != reflect.Struct {
+    return nil, errors.New("create only support struct and map")
+  }
+
+  var dest reflect.Value
+  rt := rv.Type()
+  isOriginType := (rt.PkgPath() + "." + rt.Name()) == r.modelTypeName
+  if isOriginType {
+    dest = rv
+  } else {
+    dest = r.newModel()
+  }
+
 
   for _, field := range r.Fields {
-    if !field.Create {
+    if protectField && !field.Create {
+      if isOriginType {
+        destField := dest.FieldByName(field.StructKey)
+        destField.Set(reflect.Zero(rv.FieldByName(field.StructKey).Type()))
+      }
       continue
     }
-    v := rv.MapIndex(reflect.ValueOf(field.StructKey))
-    if !v.IsValid() {
-      v = rv.MapIndex(reflect.ValueOf(field.ColumnName))
+    var v reflect.Value
+    if rv.Kind() == reflect.Map {
+      v = rv.MapIndex(reflect.ValueOf(field.StructKey))
+      if !v.IsValid() {
+        v = rv.MapIndex(reflect.ValueOf(field.ColumnName))
+      }
+      if !v.IsValid() {
+        v = rv.MapIndex(reflect.ValueOf(field.JsonKey))
+      }
+      if !v.IsValid() || v.IsZero() {
+        continue
+      }
+    } else if rv.Kind() == reflect.Struct {
+      v = rv.FieldByName(field.StructKey)
+      if !v.IsValid() || v.IsZero() {
+        continue
+      }
     }
-    if !v.IsValid() {
-      v = rv.MapIndex(reflect.ValueOf(field.JsonKey))
-    }
-    if !v.IsValid() || v.IsZero() {
-      continue
-    }
-    v = reflect.ValueOf(v.Interface())
-    destField := dest.FieldByName(field.StructKey)
-    if destField.CanSet() && destField.Kind() == v.Kind() {
-      destField.Set(v)
+
+    if v.IsValid() {
+      v = reflect.ValueOf(v.Interface())
+      destField := dest.FieldByName(field.StructKey)
+      if destField.CanSet() && destField.Kind() == v.Kind() {
+        destField.Set(v)
+      }
     }
   }
 
-  return dest.Addr().Interface()
+  return dest.Addr().Interface(), nil
+}
+
+func (r *Resource) toUpdateMap(v interface{}, protectField bool) (map[string]interface{}, error) {
+  result := map[string]interface{}{}
+  rv := reflect.ValueOf(v)
+
+  if rv.Kind() == reflect.Ptr {
+    rv = rv.Elem()
+  }
+
+  if rv.Kind() != reflect.Map && rv.Kind() != reflect.Struct {
+    return result, errors.New("update only support struct and map")
+  }
+
+  for _, field := range r.Fields {
+    if protectField && !field.Update {
+      continue
+    }
+    var v reflect.Value
+    if rv.Kind() == reflect.Map {
+      v = rv.MapIndex(reflect.ValueOf(field.StructKey))
+      if !v.IsValid() {
+        v = rv.MapIndex(reflect.ValueOf(field.ColumnName))
+      }
+      if !v.IsValid() {
+        v = rv.MapIndex(reflect.ValueOf(field.JsonKey))
+      }
+      if !v.IsValid() || v.IsZero() {
+        continue
+      }
+    } else if rv.Kind() == reflect.Struct {
+      v = rv.FieldByName(field.StructKey)
+      if !v.IsValid() || v.IsZero() {
+        continue
+      }
+    }
+
+    if v.IsValid() {
+      v = reflect.ValueOf(v.Interface())
+      result[field.ColumnName] = v.Interface()
+    }
+  }
+  return result, nil
 }
 
 // 解析查询数据
@@ -184,14 +260,18 @@ func (r *Resource) parseQueryArgs(query interface{}) []*queryArg {
 
 // 解析排序数据
 func (r *Resource) parseOrderArgs(order interface{}) []string {
+  baseOrder := append([]string{}, r.defaultOrder...)
   if order == nil {
-    return []string{}
-  }
-  if s, ok := order.([]string); ok {
-    return s
+    return baseOrder
   }
 
-  args := []string{}
+  if s, ok := order.([]string); ok {
+    return append(baseOrder, s...)
+  } else if s, ok := order.(string); ok {
+    return append(baseOrder, s)
+  }
+
+  args := baseOrder
   ov := reflect.ValueOf(order)
   if ov.Kind() == reflect.Map {
     for _, key := range ov.MapKeys() {
