@@ -36,12 +36,12 @@ type Resource struct {
 //
 // example:
 //
-// type Article struct {
-//   ID      int64  `resource:"pk;search:=;order:desc" json:"id"`
-//   Title   string `resource:"create;update;search:like" json:"title"`
-//   Content string `resource:"create;update;search:like" json:"text"`
-//   Status  byte   `resource:"search:=" json:"-"`
-// }
+//   type Article struct {
+//     ID      int64  `resource:"pk;search:=;order:desc" json:"id"`
+//     Title   string `resource:"create;update;search:like" json:"title"`
+//     Content string `resource:"create;update;search:like" json:"text"`
+//     Status  byte   `resource:"search:=" json:"-"`
+//   }
 //
 // r := NewGormResource(db, &Article{})
 func NewGormResource(db *gorm.DB, v interface{}) *Resource {
@@ -70,24 +70,21 @@ func NewGormResource(db *gorm.DB, v interface{}) *Resource {
 }
 
 // Model 返回绑定了数据表的 gorm 实例
-//
-// exmaple:
-//
-// r.Model().Where("status = ?", status).Count()
+//   r.Model().Where("status = ?", status).Count()
 func (r *Resource) Model() *gorm.DB {
   return r.model
 }
 
 // Row 返回绑定了主键值的 gorm 实例
 //
-// r.Row().Update("status", 1)
+//   r.Row().Update("status", 1)
 func (r *Resource) Row(pk interface{}) *gorm.DB {
   return r.model.Where(r.pk+" = ?", pk)
 }
 
 // Create 创建资源，支持传入 struct、map，创建前会重置 resource tag 未设置 create 的字段为0值，使得创建记录时忽略值
 //
-// err := r.Create(&Article{Title: "Hello", Status: 2}) 这里 status 会被重置为 0 ，因为 status 的 resource tag 未设置 create
+//   err := r.Create(&Article{Title: "Hello", Status: 2}) 这里 status 会被重置为 0 ，因为 status 的 resource tag 未设置 create
 func (r *Resource) Create(v interface{}) error {
   model, err := r.toCreateStruct(v, true)
   if err != nil {
@@ -98,7 +95,7 @@ func (r *Resource) Create(v interface{}) error {
 
 // CreateX 创建资源，支持传入 struct、map，传入的值均有效
 //
-// err := r.CreateX(&Article{Title: "Hello", Status: 2}) 这里 status 成功设置值
+//   err := r.CreateX(&Article{Title: "Hello", Status: 2}) 这里 status 成功设置值
 func (r *Resource) CreateX(v interface{}) error {
   model, err := r.toCreateStruct(v, false)
   if err != nil {
@@ -109,7 +106,7 @@ func (r *Resource) CreateX(v interface{}) error {
 
 // Update 更新资源，支持传入 struct、map，只会更新 resource tag 设置了 update 的字段
 //
-// err := r.Update(1, map[string]string{"title": "after title"})
+//   err := r.Update(1, map[string]string{"title": "after title"})
 func (r *Resource) Update(pk interface{}, v interface{}) error {
   updates, err := r.toUpdateMap(v, true)
   if err != nil {
@@ -123,7 +120,7 @@ func (r *Resource) Update(pk interface{}, v interface{}) error {
 
 // UpdateX 更新资源，支持传入 struct、map，更新传入的所有字段，如果传入的是 struct ，则会忽略 0 值
 //
-// err := r.UpdateX(1, map[string]byte{"status": 1})
+//   err := r.UpdateX(1, map[string]byte{"status": 1})
 func (r *Resource) UpdateX(pk interface{}, v interface{}) error {
 	updates, err := r.toUpdateMap(v, false)
 	if err != nil {
@@ -137,18 +134,16 @@ func (r *Resource) UpdateX(pk interface{}, v interface{}) error {
 
 // Detail 查询指定主键的记录
 //
-// ```
-// article := &Article{}
-// err := r.Detail(1, article)
-// ```
+//   article := &Article{}
+//   err := r.Detail(1, article)
 func (r *Resource) Detail(pk interface{}, v interface{}) error {
   return r.Row(pk).First(v).Error
 }
 
 // List 查询资源列表，提供查询条件，排序规则，查询列表，查询规则会以resource tag 的search 值为准
 //
-// list := []*Article{}
-// total, err := r.List(&list, map[string]byte{"status": 1})
+//   list := []*Article{}
+//   total, err := r.List(&list, map[string]byte{"status": 1})
 //
 func (r *Resource) List(slice interface{}, args ...interface{}) (int64, error) {
   switch len(args) {
@@ -197,7 +192,7 @@ func (r *Resource) ListPage(slice interface{}, page *Pagination, args ...interfa
 
 // Delete 删除指定主键的资源
 //
-// err := r.Delete(1)
+//   err := r.Delete(1)
 //
 func (r *Resource) Delete(pk interface{}) error {
   return r.model.Delete(r.sample, r.pk+" = ?", pk).Error
