@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/go-eyas/toolkit/log"
 	"github.com/jinzhu/gorm"
 	"strings"
 	"time"
@@ -22,8 +23,8 @@ func (l *gormLogger) Print(v ...interface{}) {
 
 	if level == "sql" {
 		tm := v[2].(time.Duration)
-		sql := v[3]
-		l.logger.Debug("SQL [", v[5], " rows][", tm.String(), "]: ", sql, " <-- ", v[4])
+		msgs := gorm.LogFormatter(v...)
+		l.logger.Debug("SQL [", v[5], " rows][", tm.String(), "]: ", msgs[3])
 	} else {
 		l.logger.Debug(v...)
 	}
@@ -36,12 +37,15 @@ func Gorm(conf *Config) (*gorm.DB, error) {
 		return nil, err
 	}
 
+	var logger *gormLogger
+	if conf.Logger != nil {
+		logger = &gormLogger{conf.Logger}
+	} else {
+		logger = &gormLogger{log.SugaredLogger}
+	}
+	db.SetLogger(logger)
 	if conf.Debug {
 		db.LogMode(conf.Debug)
-		if conf.Logger != nil {
-			log := &gormLogger{conf.Logger}
-			db.SetLogger(log)
-		}
 	}
 
 	return db, nil
