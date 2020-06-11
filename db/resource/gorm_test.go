@@ -239,6 +239,14 @@ func TestList(t *testing.T) {
   }
 
   list = []*Article{}
+  total, err = r.List(&list, &struct{ Order string }{Order: "status ASC,id ASC"})
+  if err != nil {
+    panic(err)
+  } else {
+    t.Logf("total=%d  list=%+v", total, list)
+  }
+
+  list = []*Article{}
   total, err = r.List(&list, map[string]interface{}{"title": "测试", "status": 0})
   if err != nil {
     panic(err)
@@ -247,7 +255,7 @@ func TestList(t *testing.T) {
   }
 
   list = []*Article{}
-  total, err = r.List(&list, nil, []string{"id DESC", "status ASC"})
+  total, err = r.List(&list, nil, []string{"id DESC", "  status    ASC"})
   if err != nil {
     panic(err)
   } else {
@@ -255,7 +263,7 @@ func TestList(t *testing.T) {
   }
 
   list = []*Article{}
-  total, err = r.List(&list, nil, []string{"id ASC"})
+  total, err = r.List(&list, nil, []string{"id     ASC,     status     ASC"})
   if err != nil {
     panic(err)
   } else {
@@ -265,7 +273,7 @@ func TestList(t *testing.T) {
   list = []*Article{}
   total, err = r.List(&list, nil, map[string]interface{}{
     "id":       "desc",
-    "status":   "Asc",
+    "status  ":   " Asc",
     "intvalue": 11,
   })
   if err != nil {

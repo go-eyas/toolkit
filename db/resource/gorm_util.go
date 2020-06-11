@@ -265,27 +265,76 @@ func (r *Resource) parseOrderArgs(order interface{}) []string {
     return baseOrder
   }
 
-  if s, ok := order.([]string); ok {
-    return append(baseOrder, s...)
-  } else if s, ok := order.(string); ok {
-    return append(baseOrder, s)
-  }
-
   args := baseOrder
-  ov := reflect.ValueOf(order)
-  if ov.Kind() == reflect.Map {
-    for _, key := range ov.MapKeys() {
-      k := key.Interface()
-      v := strings.ToUpper(fmt.Sprintf("%v", ov.MapIndex(key).Interface()))
-      if v != "DESC" && v != "ASC" {
-        continue
-      }
 
-      arg := fmt.Sprintf("%v %s", k, v)
-      args = append(args, arg)
+  if s, ok := order.([]string); ok {
+    args = append(args, s...)
+  } else if s, ok := order.(string); ok {
+    args = append(args, strings.Split(s, ",")...)
+  } else {
+    ov := reflect.ValueOf(order)
+    if ov.Kind() == reflect.Map {
+      for _, key := range ov.MapKeys() {
+        k := key.Interface()
+        v := strings.TrimSpace(strings.ToUpper(fmt.Sprintf("%v", ov.MapIndex(key).Interface())))
+        if v != "DESC" && v != "ASC" {
+          continue
+        }
+
+        arg := fmt.Sprintf("%v %s", k, v)
+        args = append(args, arg)
+      }
     }
   }
-  return args
+
+
+  // 去除重复
+  orderMap := map[string]string{}
+  for _, x := range args {
+    for _, o := range strings.Split(x, ",") {
+      p := strings.Split(strings.TrimSpace(o), " ")
+      if len(p) < 2 {
+        continue
+      }
+      orderMap[p[0]] = strings.TrimSpace(strings.Join(p[1:], " "))
+    }
+  }
+  orders := []string{}
+  for _, x := range args {
+    for _, o := range strings.Split(x, ",") {
+      p := strings.Split(strings.TrimSpace(o), " ")
+      if len(p) < 2 {
+        continue
+      }
+      k := p[0]
+      val, ok := orderMap[k]
+      if ok {
+        orders = append(orders, k + " " + val)
+      }
+      delete(orderMap, k)
+    }
+
+  }
+
+  return orders
+}
+
+func (r *Resource) getOrderArgs(v interface{}) []string {
+  rv := reflect.ValueOf(v)
+  var orderField reflect.Value
+  if rv.Kind() == reflect.Ptr {
+    rv = rv.Elem()
+  }
+  if rv.Kind() == reflect.Struct {
+    orderField = rv.FieldByName("Order")
+
+  } else if rv.Kind() == reflect.Map {
+    orderField = rv.MapIndex(reflect.ValueOf("order"))
+  }
+  if orderField.IsValid() {
+    return r.parseOrderArgs(orderField.Interface())
+  }
+  return []string{}
 }
 
 type Pagination struct {

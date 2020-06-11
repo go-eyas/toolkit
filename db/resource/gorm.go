@@ -165,7 +165,8 @@ func (r *Resource) List(slice interface{}, args ...interface{}) (int64, error) {
     if err != nil {
       return 0, errors.New("query parse error")
     }
-    return r.listQuery(slice, page, query, nil)
+    order := r.getOrderArgs(query)
+    return r.listQuery(slice, page, query, order)
   case 2:
     page := &Pagination{}
     query := args[0]
