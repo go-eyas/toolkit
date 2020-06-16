@@ -43,17 +43,26 @@ type Resource struct {
 //     Status  byte   `resource:"search:=" json:"-"`
 //   }
 //
-// r := NewGormResource(db, &Article{})
+//   r := NewGormResource(db, &Article{})
 func NewGormResource(db *gorm.DB, v interface{}) *Resource {
   scope := db.NewScope(v)
+  rv := reflect.ValueOf(v)
+  if rv.Kind() == reflect.Ptr {
+    rv = rv.Elem()
+  }
+  rt := rv.Type()
+  if rt.Kind() == reflect.Ptr {
+    rt = rt.Elem()
+  }
+
   r := &Resource{
-    sample:    v,
+    sample:    rv.Interface(),
     db:        db,
     tableName: scope.TableName(),
     model:     db.Table(scope.TableName()),
     scope:     scope,
   }
-  r.modelTypeName = reflect.TypeOf(v).PkgPath() + "." + reflect.TypeOf(v).Name()
+  r.modelTypeName = rt.PkgPath() + "." + rt.Name()
   fields, pk := r.parseFields(scope)
   r.Fields = fields
   r.pk = pk

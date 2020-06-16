@@ -76,10 +76,11 @@ func (r *Resource) parseFields(scope *gorm.Scope) ([]*Field, string) {
 
 // 新实例化资源
 func (r *Resource) newModel() reflect.Value {
+
   dest := reflect.New(reflect.TypeOf(r.sample))
-  if dest.Kind() == reflect.Ptr {
-    return dest.Elem()
-  }
+  // if dest.Kind() == reflect.Ptr {
+  //   return dest.Elem()
+  // }
   return dest
 }
 
@@ -103,10 +104,14 @@ func (r *Resource) toCreateStruct(v interface{}, protectField bool) (interface{}
   } else {
     dest = r.newModel()
   }
+  if dest.Kind() == reflect.Ptr {
+    dest = dest.Elem()
+  }
 
 
   for _, field := range r.Fields {
     if protectField && !field.Create {
+      // 不允许更新的字段都设置为默认值
       if isOriginType {
         destField := dest.FieldByName(field.StructKey)
         destField.Set(reflect.Zero(rv.FieldByName(field.StructKey).Type()))
@@ -134,6 +139,9 @@ func (r *Resource) toCreateStruct(v interface{}, protectField bool) (interface{}
 
     if v.IsValid() {
       v = reflect.ValueOf(v.Interface())
+      if v.Kind() == reflect.Ptr {
+        v = v.Elem()
+      }
       destField := dest.FieldByName(field.StructKey)
       if destField.CanSet() && destField.Kind() == v.Kind() {
         destField.Set(v)

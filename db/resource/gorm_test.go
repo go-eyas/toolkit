@@ -29,7 +29,7 @@ func testDB() *gorm.DB {
 }
 
 func TestCreate(t *testing.T) {
-  r, DB, err := New(dbConfig, Article{})
+  r, DB, err := New(dbConfig, &Article{})
   if err != nil {
     panic(err)
   }
