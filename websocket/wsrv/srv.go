@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"runtime/debug"
 
-	"github.com/go-eyas/toolkit/log"
 	"github.com/go-eyas/toolkit/util"
 	"github.com/go-eyas/toolkit/websocket"
 )
@@ -24,8 +23,12 @@ type WSHandler func(*Context)
 
 // New 新建服务器实例
 func New(conf *websocket.Config) *WebsocketServer {
+	if conf.Logger == nil {
+		conf.Logger = websocket.EmptyLogger
+	}
 	ws := websocket.New(conf)
 	server := &WebsocketServer{
+		logger:              conf.Logger,
 		Engine:              ws,
 		routes:              make(map[string][]WSHandler),
 		session:             make(map[uint64]map[string]interface{}),
@@ -51,6 +54,7 @@ func (ws *WebsocketServer) receive() {
 				Payload:     req.Payload,
 				RequestData: &WSRequest{},
 				Server:      ws,
+				logger:      ws.logger,
 			}
 			vals, ok := ws.session[req.SID]
 			if !ok {
@@ -58,10 +62,11 @@ func (ws *WebsocketServer) receive() {
 				vals = ws.session[req.SID]
 			}
 			ctx.Values = vals
-			log.Debugf("[WS] <-- 收到 CMD=%s data=%s", ctx.CMD, string(ctx.Payload))
+			ctx.logger.Infof("[WS] <-- RECV CMD=%s data=%s", ctx.CMD, string(ctx.Payload))
+
 			err := json.Unmarshal(ctx.Payload, ctx.RequestData)
 			if err != nil {
-				log.Errorf("WS request json parse error: %v", err)
+				ctx.logger.Errorf("WS request json parse error: %v", err)
 				return
 			}
 			ctx.CMD = ctx.RequestData.CMD
@@ -76,7 +81,7 @@ func (ws *WebsocketServer) receive() {
 
 			defer func() {
 				if err := recover(); err != nil {
-					log.Errorf("%v", err)
+					ws.logger.Errorf("%v", err)
 					debug.PrintStack()
 					r := util.ParseError(err)
 					ctx.ResponseData.Status = r.Status

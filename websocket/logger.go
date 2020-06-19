@@ -14,6 +14,6 @@ func (l) Infof(s string, v ...interface{})  {}
 func (l) Error(v ...interface{})            {}
 func (l) Errorf(s string, v ...interface{}) {}
 
-var emptyLogger = &l{}
+var EmptyLogger = &l{}
 
-var logger LoggerI = emptyLogger
+var logger LoggerI = EmptyLogger

@@ -83,6 +83,6 @@ func (c *Context) writeResponse() error {
 	if err != nil {
 		return err
 	}
-	c.logger.Infof("[WS] --> 发送 CMD=%s data=%s", c.CMD, string(payload))
+	c.logger.Infof("[WS] --> SEND CMD=%s data=%s", c.CMD, string(payload))
 	return c.RawMessage.Response(payload)
 }
