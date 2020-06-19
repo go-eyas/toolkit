@@ -1,6 +1,6 @@
 package websocket
 
-type loggerI interface {
+type LoggerI interface {
 	Info(...interface{})
 	Infof(string, ...interface{})
 	Error(...interface{})
@@ -16,4 +16,4 @@ func (l) Errorf(s string, v ...interface{}) {}
 
 var emptyLogger = &l{}
 
-var logger loggerI = emptyLogger
+var logger LoggerI = emptyLogger

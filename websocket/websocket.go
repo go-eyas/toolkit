@@ -22,7 +22,7 @@ type Config struct {
 	ReadBufferSize  int                      // 读取缓存大小
 	WriteBufferSize int                      // 写入缓存大小
 	CheckOrigin     func(*http.Request) bool // 检查跨域来源是否允许建立连接
-	Logger          loggerI                  // 用于打印内部产生日志
+	Logger          LoggerI                  // 用于打印内部产生日志
 }
 
 // New 新建 websocket 服务
