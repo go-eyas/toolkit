@@ -19,10 +19,10 @@ func TestSrv(t *testing.T) {
 		log.Debugf("ws response middleware, sid=%d", c.SessionID)
 	})
 	server.UseRequest(func(c *Context) {
-		uid, ok := c.Get("uid").(int64)
-		if !ok || uid == 0 {
-			c.Abort()
-		}
+		// uid, ok := c.Get("uid").(int64)
+		// if !ok || uid == 0 {
+		// 	c.Abort()
+		// }
 	})
 	server.Handle("register")
 	server.Handle("register", func(c *Context) {

@@ -122,18 +122,20 @@ func (ws *WebsocketServer) receive() {
           break
         }
       }
-      handler, ok := ws.routes[ctx.CMD]
-      if !ok {
-        return
-      } else {
-        ctx.ResponseData.Status = 1
-        ctx.ResponseData.Msg = "empty implement"
-      }
       if !ctx.isAbort {
-        for _, h := range handler {
-          h(ctx)
-          if ctx.isAbort {
-            break
+        handler, ok := ws.routes[ctx.CMD]
+        if !ok {
+          return
+        } else {
+          ctx.ResponseData.Status = 1
+          ctx.ResponseData.Msg = "empty implement"
+        }
+        if !ctx.isAbort {
+          for _, h := range handler {
+            h(ctx)
+            if ctx.isAbort {
+              break
+            }
           }
         }
       }
