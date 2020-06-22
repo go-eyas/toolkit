@@ -1,99 +1,106 @@
 package websocket
 
 import (
-	"html/template"
-	"net/http"
-	"sync"
+  "html/template"
+  "net/http"
+  "sync"
 
-	"github.com/gorilla/websocket"
+  "github.com/gorilla/websocket"
 )
 
 const (
-	// 文本消息
-	TextMessage = 1
+  // 文本消息
+  TextMessage = 1
 
-	// 二进制数据消息
-	BinaryMessage = 2
+  // 二进制数据消息
+  BinaryMessage = 2
 )
 
 // Config 配置项
 type Config struct {
-	MsgType         int                      // 消息类型 TextMessage | BinaryMessage
-	ReadBufferSize  int                      // 读取缓存大小
-	WriteBufferSize int                      // 写入缓存大小
-	CheckOrigin     func(*http.Request) bool // 检查跨域来源是否允许建立连接
-	Logger          LoggerI                  // 用于打印内部产生日志
+  MsgType         int                      // 消息类型 TextMessage | BinaryMessage
+  ReadBufferSize  int                      // 读取缓存大小
+  WriteBufferSize int                      // 写入缓存大小
+  CheckOrigin     func(*http.Request) bool // 检查跨域来源是否允许建立连接
+  Logger          LoggerI                  // 用于打印内部产生日志
 }
 
 // New 新建 websocket 服务
 func New(conf *Config) *WS {
-	if conf.MsgType == 0 {
-		conf.MsgType = websocket.TextMessage
-	}
-	if conf.CheckOrigin == nil {
-		conf.CheckOrigin = func(r *http.Request) bool { return true }
-	}
+  if conf.MsgType == 0 {
+    conf.MsgType = websocket.TextMessage
+  }
+  if conf.CheckOrigin == nil {
+    conf.CheckOrigin = func(r *http.Request) bool { return true }
+  }
 
-	if conf.Logger != nil {
-		logger = conf.Logger
-	}
+  ws := &WS{
+    MsgType:   conf.MsgType,
+    Clients:   make(map[uint64]*Conn),
+    recC:      make(chan *Message, 1024),
+    logger:    conf.Logger,
+    createHandlers: make([]EventHandle, 0),
+    closeHandlers: make([]EventHandle, 0),
+  }
 
-	ws := &WS{
-		MsgType: conf.MsgType,
-		Clients: make(map[uint64]*Conn),
-		recC:    make(chan *Message, 1024),
-		sendC:   make(chan *Message, 1024),
-	}
+  if ws.logger == nil {
+    ws.logger = EmptyLogger
+  }
 
-	ws.Upgrader = &websocket.Upgrader{
-		ReadBufferSize:  conf.ReadBufferSize,
-		WriteBufferSize: conf.WriteBufferSize,
-		CheckOrigin:     conf.CheckOrigin,
-	}
-	logger.Info("websocket: init websocket")
+  ws.Upgrader = &websocket.Upgrader{
+    ReadBufferSize:  conf.ReadBufferSize,
+    WriteBufferSize: conf.WriteBufferSize,
+    CheckOrigin:     conf.CheckOrigin,
+  }
+  ws.logger.Info("websocket: init websocket")
 
-	return ws
+  return ws
 }
+
+type EventHandle func(*Conn)
 
 // WS ws 连接
 type WS struct {
-	Clients  map[uint64]*Conn
-	Upgrader *websocket.Upgrader
-	id       uint64
-	MsgType  int
-
-	recC  chan *Message
-	sendC chan *Message
+  Clients  map[uint64]*Conn
+  Upgrader *websocket.Upgrader
+  id       uint64
+  MsgType  int
+  recC      chan *Message
+  logger LoggerI
+  createHandlers []EventHandle
+  closeHandlers []EventHandle
 }
 
 var connMu sync.RWMutex
 
 // HTTPHandler 给 http 控制器绑定使用
 func (ws *WS) HTTPHandler(w http.ResponseWriter, r *http.Request) {
-	socket, err := ws.Upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		return
-	}
-	ws.id++
+  socket, err := ws.Upgrader.Upgrade(w, r, nil)
+  if err != nil {
+    return
+  }
+  ws.id++
 
-	conn := &Conn{
-		Socket: socket,
-		// RecChannel:  make(chan *Message, 2),
-		// SendChannel: make(chan *Message, 2),
-		ws: ws,
-		// msgType:     ws.MsgType,
-		id: ws.id,
-	}
+  conn := &Conn{
+    Socket: socket,
+    ws:     ws,
+    ID:     ws.id,
+  }
 
-	logger.Infof("websocket: new websocket connect create: %d", conn.id)
+  ws.logger.Infof("websocket: new websocket connect create: sid=%d", conn.ID)
 
-	connMu.Lock()
-	ws.Clients[conn.id] = conn
-	connMu.Unlock()
+  connMu.Lock()
+  ws.Clients[conn.ID] = conn
+  connMu.Unlock()
 
-	conn.Init()
+  // send init message
+  for _, createH := range ws.createHandlers {
+    createH(conn)
+  }
 
-	defer ws.destroyConn(ws.id)
+  conn.Init()
+
+  defer ws.destroyConn(ws.id)
 }
 
 var page = template.Must(template.New("").Parse(`
@@ -174,35 +181,47 @@ You can change the message and send multiple times.
 `))
 
 func (ws *WS) Playground(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "text/html")
-	err := page.Execute(w, "ws://"+r.Host+"/ws")
-	if err != nil {
-		panic(err)
-	}
+  w.Header().Add("Content-Type", "text/html")
+  err := page.Execute(w, "ws://"+r.Host+"/ws")
+  if err != nil {
+    panic(err)
+  }
 }
 
 // Receive 获取接收数据的 chan
 func (ws *WS) Receive() <-chan *Message {
-	return ws.recC
+  return ws.recC
 }
 
 // Send 发送数据
 func (ws *WS) Send(msg *Message) error {
-	m := &(*msg)
-	m.ws = ws
-	return m.writer()
+  m := &(*msg)
+  m.ws = ws
+  return m.writer()
+}
+
+func (ws *WS) HandleClose(fn EventHandle) {
+  ws.closeHandlers = append(ws.closeHandlers, fn)
+}
+
+func (ws *WS) HandleCreate(fn EventHandle) {
+  ws.createHandlers = append(ws.createHandlers, fn)
 }
 
 // destroyConn 销毁连接
 func (ws *WS) destroyConn(cid uint64) {
-	conn, ok := ws.Clients[ws.id]
-	if !ok {
-		return
-	}
-	conn.Destroy()
+  conn, ok := ws.Clients[ws.id]
+  if !ok {
+    return
+  }
+  for _, closeH := range ws.closeHandlers {
+    closeH(conn)
+  }
 
-	connMu.Lock()
-	delete(ws.Clients, cid)
-	connMu.Unlock()
-	logger.Info("websocket: destroy ws connect")
+  conn.Destroy()
+
+  connMu.Lock()
+  delete(ws.Clients, cid)
+  connMu.Unlock()
+  ws.logger.Info("websocket: destroy ws connect")
 }

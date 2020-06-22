@@ -27,6 +27,16 @@ func TestSrv(t *testing.T) {
 	server.Handle("register")
 	server.Handle("register", func(c *Context) {
 		c.Set("uid", int(123))
+		for sid, vals := range server.Session {
+			if uid, ok := vals["uid"]; ok {
+				server.Push(sid, &WSResponse{
+					CMD: "have_user_register",
+					Data: map[string]interface{}{
+						"uid": uid,
+					},
+				})
+			}
+		}
 		c.OK()
 	})
 

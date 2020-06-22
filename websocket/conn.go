@@ -9,7 +9,7 @@ type Conn struct {
 	Socket  *websocket.Conn // 连接
 	ws      *WS             // ws 服务
 	isClose bool
-	id      uint64
+	ID      uint64
 }
 
 // Init 初始化该连接
@@ -24,7 +24,7 @@ func (c *Conn) reader() error {
 			return err
 		}
 		logger.Infof("websocket: receive data=%s", string(mRaw))
-		msg := &Message{c.id, mRaw, c.ws, c, mType}
+		msg := &Message{c.ID, mRaw, c.ws, c, mType}
 		c.ws.recC <- msg
 	}
 }

@@ -69,6 +69,19 @@ func main() {
 
   server.Handle("register", func(c *wsrv.Context) {
     c.Set("uid", 1001)
+    
+    // server push
+    for sid, vals := range server.Session {
+      if uid, ok := vals["uid"]; ok {
+        server.Push(sid, &wsrv.WSResponse{
+          CMD: "have_user_register",
+          Data: map[string]interface{}{
+            "uid": uid,
+          },
+        })
+      } 
+    }
+
     c.OK()
   })
   server,Handle("userinfo", func(c *wsrv.Context) {
