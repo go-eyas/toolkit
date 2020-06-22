@@ -35,6 +35,7 @@ func main() {
 ```go
 import (
   "net/http"
+  "github.com/go-eyas/toolkit/websocket"
   "github.com/go-eyas/toolkit/websocket/wsrv"
 )
 func main() {

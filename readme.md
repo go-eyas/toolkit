@@ -63,6 +63,8 @@ go func() {
 http.ListenAndServe("127.0.0.1:8800", nil)
 ```
 
+还有一个类似 http api 的[开箱即用服务](./websocket/wsrv)
+
 # [RabbitMQ amqp](./amqp)
 
 ```go
