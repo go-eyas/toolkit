@@ -82,6 +82,14 @@ func main() {
       } 
     }
 
+    // server push current connection
+    c.Push(&wsrv.WSResponse{
+      CMD: "user_register",
+      Data: map[string]interface{}{
+        "uid": uid,
+      },
+    })
+
     c.OK()
   })
   server,Handle("userinfo", func(c *wsrv.Context) {
@@ -95,3 +103,5 @@ func main() {
 ```
 
 ## API
+
+[API 文档](https://gowalker.org/github.com/go-eyas/toolkit/websocket/wsrv)
