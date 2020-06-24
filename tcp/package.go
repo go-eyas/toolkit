@@ -3,7 +3,6 @@ package tcp
 import (
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"github.com/go-eyas/toolkit/util"
 )
 
@@ -22,34 +21,39 @@ func Packer(data interface{}) ([]byte, error) {
 	bodyLen := uint32(len(body))
 	header := make([]byte, 4)
 	binary.BigEndian.PutUint32(header, bodyLen)
-	// return header, nil
-	// header := bytes.NewBuffer(make([]byte, 4))
-	// _ = binary.Write(header, binary.BigEndian, bodyLen)
+
 	pkg := util.BytesCombine(header, body)
 	return pkg, nil
 }
 
-// 解包
-var parserBuf = make(map[*Conn][]byte)
+func Parser() (map[uint64][]byte, func(conn *Conn, bt []byte) ([]interface{}, error)) {
+	// 解包
+	var parserBuf = make(map[uint64][]byte)
+	return parserBuf, func(conn *Conn, bt []byte) ([]interface{}, error) {
+		preBuf, ok := parserBuf[conn.ID]
+		if !ok {
+			preBuf = make([]byte, 0)
+			parserBuf[conn.ID] = preBuf
+		}
 
-func Parser(conn *Conn, bt []byte) (interface{}, error) {
-	preBuf, ok := parserBuf[conn]
-	if !ok {
-		preBuf = make([]byte, 0)
-		parserBuf[conn] = preBuf
+		buf := util.BytesCombine(preBuf, bt)
+		datas := make([]interface{}, 0)
+
+		for {
+			if len(buf) < 4 {
+				break
+			}
+			header := buf[:4]
+			bodyLen := binary.BigEndian.Uint32(header)
+			if uint32(len(buf)) < (4 + bodyLen) {
+				break
+			}
+			pack := buf[4 : 4+bodyLen]
+			buf = buf[4+bodyLen:]
+			datas = append(datas, pack)
+		}
+		parserBuf[conn.ID] = buf
+
+		return datas, nil
 	}
-	buf := util.BytesCombine(preBuf, bt)
-	if len(buf) < 4 {
-		parserBuf[conn] = util.BytesCombine(parserBuf[conn], bt)
-		return nil, errors.New("half pack")
-	}
-	header := buf[:4]
-	bodyLen := binary.BigEndian.Uint32(header)
-	if uint32(len(buf)) < (4 + bodyLen) {
-		parserBuf[conn] = util.BytesCombine(parserBuf[conn], bt)
-		return nil, errors.New("half pack")
-	}
-	body := buf[4 : 4+bodyLen]
-	parserBuf[conn] = buf[4+bodyLen:]
-	return body, nil
 }
