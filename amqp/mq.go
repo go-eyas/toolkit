@@ -72,6 +72,7 @@ func (mq *MQ) reconnect() {
 		select {
 		case <-mq.notifyClose:
 			fmt.Println("rabbitmq connection is close, retrying...")
+			mq.Client.Close()
 			<-time.After(500 * time.Millisecond) // 隔 500ms 重连一次
 			mq.connect()
 			break
