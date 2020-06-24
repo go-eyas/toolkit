@@ -23,7 +23,7 @@ func TestAmqp(t *testing.T) {
 		panic(err)
 	}
 
-	testCount := 100000
+	testCount := 1000
 
 	startTime := time.Now()
 
@@ -51,15 +51,17 @@ func TestAmqp(t *testing.T) {
 
 	wg.Wait()
 	t.Logf("消费 %d 条数据, 耗时 %d 纳秒 \n", testCount, time.Since(startTime1))
-
 }
 
 func TestExchangePub(t *testing.T) {
 	queue := &Queue{Name: "toolkit.queue.test2", Key: "toolkit.queue2.*"}
-	mq, _ := New(&Config{
+	mq, err := New(&Config{
 		Addr:         "amqp://guest:guest@10.0.2.252:5672/",
 		ExchangeName: "toolkit.exchange.test2", // 直连交换机名称
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	count := 100
 
@@ -96,6 +98,7 @@ func TestExchangePub(t *testing.T) {
 	}
 
 	wg2.Wait()
+
 }
 
 func TestAmqpApp(t *testing.T) {

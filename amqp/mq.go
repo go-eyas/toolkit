@@ -2,10 +2,9 @@ package amqp
 
 import (
 	"fmt"
+	"github.com/streadway/amqp"
 	"sync"
 	"time"
-
-	"github.com/streadway/amqp"
 )
 
 type MQ struct {
@@ -14,9 +13,9 @@ type MQ struct {
 	Channel     *amqp.Channel
 	Exchange    *Exchange
 	Consumer    *Consumer
-	notifyClose chan *amqp.Error
+	// notifyClose chan *amqp.Error
 	subQueues   []*Queue // 已注册为消费者的通道
-
+	retrying bool
 }
 
 // Init 初始化
@@ -59,28 +58,67 @@ func (mq *MQ) connect() error {
 	}
 
 	// 断线重连
-	go mq.reconnect()
+	if !mq.retrying {
+		go mq.reconnect()
+	}
+
 
 	return nil
 }
 
 func (mq *MQ) reconnect() {
-	mq.notifyClose = make(chan *amqp.Error)
-	mq.Channel.NotifyClose(mq.notifyClose)
+	mq.retrying = true
 
-	for {
-		select {
-		case <-mq.notifyClose:
-			fmt.Println("rabbitmq connection is close, retrying...")
-			if mq.Client != nil {
-				mq.Client.Close()
-				mq.Client = nil
-			}
-			<-time.After(2 * time.Second) // 隔 500ms 重连一次
-			go mq.connect()
-			break
-		}
+	if mq.Client != nil && mq.Channel != nil {
+		// 已经连上了，监听关闭消息
+		closeCh := make(chan *amqp.Error)
+		mq.Channel.NotifyClose(closeCh)
+		err := <- closeCh
+		fmt.Printf("rabbitmq connection is close: %v, retrying...\n", err)
+		mq.Client.Close()
+		mq.Channel.Close()
+		mq.Client = nil
+		mq.Channel = nil
 	}
+
+	err := mq.connect()
+	if err != nil {
+		fmt.Printf("rabbitmq connection retry fail: %v next retrying...\n", err)
+	} else {
+		fmt.Printf("rabbitmq connection retry ok\n")
+	}
+	time.Sleep(2 * time.Second)
+	mq.reconnect()
+	// if err != nil {
+	//
+	// 	err := mq.connect()
+	// 	if err != nil {
+	// 		mq.reconnect()
+	// 	}
+	// }
+
+	// for {
+	// 	closeCh := make(chan *amqp.Error)
+	// 	mq.Channel.NotifyClose(closeCh)
+	//
+	// 	err, ok := <-closeCh
+	// 	if !ok {
+	// 		continue
+	// 	}
+	// 	if err == nil {
+	// 		continue
+	// 	}
+	//
+	// 	fmt.Printf("rabbitmq connection is close: %v, retrying...\n", err)
+	// 	if mq.Client != nil {
+	// 		mq.Client.Close()
+	// 		mq.Client = nil
+	//
+	// 	}
+	// 	<-time.After(2 * time.Second) // 隔 2s 重连一次
+	// 	mq.connect()
+	//
+	// }
 }
 
 var subMu sync.Mutex
