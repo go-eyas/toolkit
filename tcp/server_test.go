@@ -32,7 +32,7 @@ func TestServer(t *testing.T) {
 			"hello": "world",
 		})
 		if err != nil {
-			panic(err)
+			t.Log(err)
 		}
 	}
 

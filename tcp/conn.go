@@ -79,7 +79,7 @@ func (conn *Conn) Send(msg *Message) error {
 	return err
 }
 
-func (conn *Conn) Destroy() {
+func (conn *Conn) Destroy() error {
 	if conn.IsServer() {
 		for _, h := range conn.server.closeConnHandlers {
 			h(conn)
@@ -91,5 +91,5 @@ func (conn *Conn) Destroy() {
 			h(conn)
 		}
 	}
-	_ = conn.Conn.Close()
+	return conn.Conn.Close()
 }

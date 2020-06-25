@@ -14,9 +14,18 @@ import (
 
 // 打包
 func Packer(data interface{}) ([]byte, error) {
-	body, err := json.Marshal(data)
-	if err != nil {
-		return nil, err
+	var body []byte
+	switch data.(type) {
+	case []byte:
+		body = data.([]byte)
+	case string:
+		body = []byte(data.(string))
+	default:
+		var err error
+		body, err = json.Marshal(data)
+		if err != nil {
+			return nil, err
+		}
 	}
 	bodyLen := uint32(len(body))
 	header := make([]byte, 4)

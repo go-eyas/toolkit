@@ -3,52 +3,99 @@ package tcp
 import (
 	"errors"
 	"net"
+	"time"
 )
 
 type Client struct {
 	Conn     *Conn
 	Config   *Config
 	recChan  chan *Message // 收到的数据，这里是经过 Parser 解析后的数据
-	// sendChan chan *Message // 待发送的数据，这里原始数据，下一步会将里面的数据给 Packer 处理好，然后发送出去
+	socketCount uint64
+	autoReconnect bool
 
 	createConnHandlers []connHandler // 当有新连接建立时触发函数
 	closeConnHandlers []connHandler // 当有连接关闭时触发函数
+
+	closeNotify chan *Conn // 连接关闭时通知通道
 }
 
 func NewClient(conf *Config) (*Client, error) {
+	var defaultParsePoll map[uint64][]byte
 	if conf.Packer == nil && conf.Parser == nil {
 		conf.Packer = Packer
-		_, conf.Parser = Parser()
+		defaultParsePoll, conf.Parser = Parser()
 	} else if conf.Packer != nil || conf.Parser != nil {
-		return nil, errors.New("the Packer and Parser must be specified together")
+		return nil ,errors.New("the Packer and Parser must be specified together")
 	}
 
-	dial, err := net.Dial(conf.Network, conf.Addr)
+
+	client := &Client{
+		autoReconnect: true,
+		Config:   conf,
+		recChan:  make(chan *Message, 2),
+		closeNotify: make(chan *Conn, 0),
+	}
+
+	// 连接关闭了通知一下
+	client.HandleClose(func(conn *Conn) {
+		delete(defaultParsePoll, conn.ID)
+		if client.autoReconnect {
+			client.closeNotify <- conn
+		}
+	})
+
+	err := client.connect()
+
 	if err != nil {
 		return nil, err
 	}
 
-	conn := &Conn{Conn: dial}
-	client := &Client{
-		Conn:     conn,
-		Config:   conf,
-		recChan:  make(chan *Message, 2),
-		// sendChan: make(chan *Message, 2),
-	}
-	conn.client = client
-
-	go client.Conn.reader()
+	go client.reconnect()
 
 	return client, nil
 }
 
-// TODO
+func (c *Client) connect() error {
+	dial, err := net.Dial(c.Config.Network, c.Config.Addr)
+	if err != nil {
+		return err
+	}
+	c.socketCount++
+	conn := &Conn{Conn: dial, ID: c.socketCount}
+	c.Conn = conn
+	conn.client = c
+
+	go c.reader()
+	return nil
+}
+
 func (c *Client) reconnect() {
+	if !c.autoReconnect {
+		close(c.closeNotify)
+		return
+	}
+	<- c.closeNotify
+	// conn := <- c.closeNotify
+	// fmt.Printf("conn %d is close, retrying...\n", conn.ID)
+	for {
+		time.Sleep(1 * time.Second)
+		err := c.connect()
+		if err != nil {
+			// fmt.Printf("reconnect fail: %v\n", err)
+		} else {
+			// fmt.Printf("reconnect ok: \n")
+			go c.reconnect()
+			break
+		}
+	}
 
 }
 
 func (c *Client) reader() {
-	go c.Conn.reader()
+	for _, h := range c.createConnHandlers {
+		h(c.Conn)
+	}
+	c.Conn.reader()
 }
 
 func (c *Client) HandleCreate(h connHandler) {
@@ -65,4 +112,9 @@ func (c *Client) Receive() <-chan *Message {
 
 func (c *Client) Send(msg *Message) error {
 	return c.Conn.Send(msg)
+}
+
+func (c *Client) Destroy() error {
+	c.autoReconnect = false
+	return c.Conn.Destroy()
 }

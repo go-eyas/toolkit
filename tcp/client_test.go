@@ -3,6 +3,7 @@ package tcp
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestClient(t *testing.T) {
@@ -68,6 +69,22 @@ func TestClient(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	go func() {
+		for i := 0; true; i++ {
+			time.Sleep(2 * time.Second)
+			err = client.Send(&Message{
+				Data: []byte(fmt.Sprintf("auto send %d", i)),
+			})
+
+			if i > 20 {
+				client.Destroy()
+			}
+			if err != nil {
+				t.Log(err)
+			}
+		}
+	}()
 
 
 	ch := client.Receive()
