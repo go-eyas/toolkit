@@ -1,14 +1,10 @@
 package tcp
 
 type Message struct {
-	Data interface{}
+	Data []byte
 	Conn *Conn
 }
 
-func (m *Message) Response(data interface{}) error {
-	msg := &Message{
-		Data: data,
-		Conn: m.Conn,
-	}
-	return m.Conn.Send(msg)
+func (m *Message) Response(data []byte) error {
+	return m.Conn.Send(data)
 }

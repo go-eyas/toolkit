@@ -1,107 +1,119 @@
 package tcp
 
 import (
-	"errors"
-	"net"
+  "errors"
+  "net"
 )
 
 type connHandler func(*Conn)
 
 // Server 服务器
 type Server struct {
-	Listener net.Listener
-	Sockets  map[uint64]*Conn
+  Listener net.Listener     // 服务器监听实例
+  Sockets  map[uint64]*Conn // 当前与客户端的连接实例
+  Config   *Config          // 配置项
 
-	Config *Config
-
-	recChan  chan *Message // 收到的数据，这里是经过 Parser 解析后的数据
-	// sendChan chan *Message // 待发送的数据，这里原始数据，下一步会将里面的数据给 Packer 处理好，然后发送出去
-
-	socketCount uint64 // id 计数器
-
-	createConnHandlers []connHandler // 当有新连接建立时触发函数
-	closeConnHandlers []connHandler // 当有连接关闭时触发函数
+  recChan            chan *Message // 收到的数据，这里是经过 Parser 解析后的数据
+  socketCount        uint64        // id 计数器
+  createConnHandlers []connHandler // 当有新连接建立时触发函数
+  closeConnHandlers  []connHandler // 当有连接关闭时触发函数
 }
 
+// NewServer 实例化服务器
 func NewServer(conf *Config) (*Server, error) {
-	var defaultParsePoll map[uint64][]byte
-	if conf.Packer == nil && conf.Parser == nil {
-		conf.Packer = Packer
-		defaultParsePoll, conf.Parser = Parser()
-	} else if conf.Packer != nil || conf.Parser != nil {
-		return nil ,errors.New("the Packer and Parser must be specified together")
-	}
+  var defaultParsePoll map[uint64][]byte
+  if conf.Packer == nil && conf.Parser == nil {
+    conf.Packer = Packer
+    defaultParsePoll, conf.Parser = Parser()
+  } else if conf.Packer != nil || conf.Parser != nil {
+    return nil, errors.New("the Packer and Parser must be specified together")
+  }
 
-	listener, err := net.Listen(conf.Network, conf.Addr)
-	if err != nil {
-		return nil, err
-	}
+  if conf.Network == "" {
+    conf.Network = "tcp"
+  }
 
-	server := &Server{
-		Listener: listener,
-		Config:   conf,
-		Sockets:  make(map[uint64]*Conn),
-		recChan:  make(chan *Message, 2),
-		// sendChan: make(chan *Message, 2),
-		createConnHandlers: make([]connHandler, 0),
-		closeConnHandlers: make([]connHandler, 0),
-	}
+  listener, err := net.Listen("tcp", conf.Addr)
+  if err != nil {
+    return nil, err
+  }
 
-	go server.Accept()
+  server := &Server{
+    Listener: listener,
+    Config:   conf,
+    Sockets:  make(map[uint64]*Conn),
+    recChan:  make(chan *Message, 2),
+    // sendChan: make(chan *Message, 2),
+    createConnHandlers: make([]connHandler, 0),
+    closeConnHandlers:  make([]connHandler, 0),
+  }
 
-	// 清理已关闭的连接解析池
-	if defaultParsePoll != nil {
-		server.HandleClose(func(conn *Conn) {
-			if _, ok := defaultParsePoll[conn.ID]; ok {}
-		})
-	}
-	return server, nil
+  go server.accept()
+
+  // 清理已关闭的连接解析池
+  if defaultParsePoll != nil {
+    server.HandleClose(func(conn *Conn) {
+      if _, ok := defaultParsePoll[conn.ID]; ok {
+      }
+    })
+  }
+  return server, nil
 }
 
-func (sv *Server) Accept() {
-	for {
-		conn, err := sv.Listener.Accept()
-		if err != nil {
-			continue
-		}
-		sv.newConn(conn)
-	}
+// 接收新连接
+func (sv *Server) accept() {
+  for {
+    conn, err := sv.Listener.Accept()
+    if err != nil {
+      continue
+    }
+    sv.newConn(conn)
+  }
 }
 
+// Receive 接收数据
 func (sv *Server) Receive() <-chan *Message {
-	return sv.recChan
+  return sv.recChan
 }
 
-func (sv *Server) Send(conn *Conn, data interface{}) error {
-	msg := &Message{
-		Data: data,
-		Conn: conn,
-	}
-	return conn.Send(msg)
+// Send 发送数据到指定连接实例
+func (sv *Server) Send(conn *Conn, data []byte) error {
+  return conn.Send(data)
 }
 
+// SendConnID 发送数据到指定连接实例ID
+func (sv *Server) SendConnID(id uint64, data []byte) error {
+  conn, ok := sv.Sockets[id]
+  if !ok || conn == nil {
+    return errors.New("invalid connection")
+  }
+  return sv.Send(conn, data)
+}
+
+// HandleCreate 每当有新连接建立时，触发函数
 func (sv *Server) HandleCreate(h connHandler) {
-	sv.createConnHandlers = append(sv.createConnHandlers, h)
+  sv.createConnHandlers = append(sv.createConnHandlers, h)
 }
 
+// HandleClose 每当有连接关闭时，触发函数
 func (sv *Server) HandleClose(h connHandler) {
-	sv.closeConnHandlers = append(sv.closeConnHandlers, h)
+  sv.closeConnHandlers = append(sv.closeConnHandlers, h)
 }
 
 func (sv *Server) newConn(conn net.Conn) *Conn {
-	sv.socketCount++
-	c := &Conn{
-		ID:     sv.socketCount,
-		Conn:   conn,
-		server: sv,
-	}
-	sv.Sockets[c.ID] = c
+  sv.socketCount++
+  c := &Conn{
+    ID:     sv.socketCount,
+    Conn:   conn,
+    server: sv,
+  }
+  sv.Sockets[c.ID] = c
 
-	// 触发器
-	for _, h := range sv.createConnHandlers {
-		h(c)
-	}
+  // 触发器
+  for _, h := range sv.createConnHandlers {
+    h(c)
+  }
 
-	go c.reader()
-	return c
+  go c.reader()
+  return c
 }

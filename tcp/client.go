@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Client tcp 客户端
 type Client struct {
 	Conn     *Conn
 	Config   *Config
@@ -19,6 +20,7 @@ type Client struct {
 	closeNotify chan *Conn // 连接关闭时通知通道
 }
 
+// 实例化 tcp 客户端连接，与服务器建立 TCP 连接
 func NewClient(conf *Config) (*Client, error) {
 	var defaultParsePoll map[uint64][]byte
 	if conf.Packer == nil && conf.Parser == nil {
@@ -26,6 +28,10 @@ func NewClient(conf *Config) (*Client, error) {
 		defaultParsePoll, conf.Parser = Parser()
 	} else if conf.Packer != nil || conf.Parser != nil {
 		return nil ,errors.New("the Packer and Parser must be specified together")
+	}
+
+	if conf.Network == "" {
+		conf.Network = "tcp"
 	}
 
 
@@ -55,6 +61,7 @@ func NewClient(conf *Config) (*Client, error) {
 	return client, nil
 }
 
+// 连接tcp
 func (c *Client) connect() error {
 	dial, err := net.Dial(c.Config.Network, c.Config.Addr)
 	if err != nil {
@@ -69,6 +76,7 @@ func (c *Client) connect() error {
 	return nil
 }
 
+// tcp 断开重连机制
 func (c *Client) reconnect() {
 	if !c.autoReconnect {
 		close(c.closeNotify)
@@ -91,6 +99,7 @@ func (c *Client) reconnect() {
 
 }
 
+// 读取 tcp 连接数据
 func (c *Client) reader() {
 	for _, h := range c.createConnHandlers {
 		h(c.Conn)
@@ -98,22 +107,27 @@ func (c *Client) reader() {
 	c.Conn.reader()
 }
 
+// HandleCreate 每当连接建立成功后时，触发函数
 func (c *Client) HandleCreate(h connHandler) {
 	c.createConnHandlers = append(c.createConnHandlers, h)
 }
 
+// HandleClose 每当连接断开后，触发函数
 func (c *Client) HandleClose(h connHandler) {
 	c.closeConnHandlers = append(c.closeConnHandlers, h)
 }
 
+// Receive 接收数据
 func (c *Client) Receive() <-chan *Message {
 	return c.recChan
 }
 
-func (c *Client) Send(msg *Message) error {
+// Send 往连接发送数据
+func (c *Client) Send(msg []byte) error {
 	return c.Conn.Send(msg)
 }
 
+// Destroy 关闭并销毁连接
 func (c *Client) Destroy() error {
 	c.autoReconnect = false
 	return c.Conn.Destroy()

@@ -14,16 +14,19 @@ type Conn struct {
 	client  *Client
 }
 
+// IsServer 当前连接是否为服务器实例
 func (conn *Conn) IsServer() bool {
 	return conn.server != nil
 }
 
+// IsClient 当前连接是否为客户端实例
 func (conn *Conn) IsClient() bool {
 	return conn.client != nil
 }
 
+// 接收连接数据
 func (conn *Conn) reader() {
-	var parser func(*Conn, []byte) ([]interface{}, error)
+	var parser func(*Conn, []byte) ([][]byte, error)
 	if conn.IsClient() {
 		parser = conn.client.Config.Parser
 	} else if conn.IsServer() {
@@ -58,16 +61,17 @@ func (conn *Conn) reader() {
 	}
 }
 
-func (conn *Conn) Send(msg *Message) error {
+// Send 给当前连接发送数据
+func (conn *Conn) Send(msg []byte) error {
 	conn.writeMu.Lock()
 	defer conn.writeMu.Unlock()
 	var err error
 	var pack []byte
 
 	if conn.IsClient() {
-		pack, err = conn.client.Config.Packer(msg.Data)
+		pack, err = conn.client.Config.Packer(msg)
 	} else if conn.IsServer() {
-		pack, err = conn.server.Config.Packer(msg.Data)
+		pack, err = conn.server.Config.Packer(msg)
 	} else {
 		err = errors.New("the connection is invalid")
 	}
@@ -79,6 +83,7 @@ func (conn *Conn) Send(msg *Message) error {
 	return err
 }
 
+// Destroy 关闭并销毁连接
 func (conn *Conn) Destroy() error {
 	if conn.IsServer() {
 		for _, h := range conn.server.closeConnHandlers {

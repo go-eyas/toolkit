@@ -27,10 +27,8 @@ func TestServer(t *testing.T) {
 	ch := server.Receive()
 
 	for data := range ch {
-		t.Logf("receive: %v", string(data.Data.([]byte)))
-		err := data.Response(map[string]interface{}{
-			"hello": "world",
-		})
+		t.Logf("receive: %v", string(data.Data))
+		err := data.Response([]byte(`server receive: ` + string(data.Data)))
 		if err != nil {
 			t.Log(err)
 		}

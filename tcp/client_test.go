@@ -28,44 +28,32 @@ func TestClient(t *testing.T) {
 
 	// 发送数据
 	t.Log("send 1")
-	err = client.Send(&Message{
-		Data: []byte("hello world1"),
-	})
+	err = client.Send([]byte("hello world1"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("send 2")
-	err = client.Send(&Message{
-		Data: []byte("hello world2"),
-	})
+	err = client.Send([]byte("hello world2"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("send 3")
-	err = client.Send(&Message{
-		Data: []byte("hello world3"),
-	})
+	err = client.Send([]byte("hello world3"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("send 4")
-	err = client.Send(&Message{
-		Data: []byte("hello world4"),
-	})
+	err = client.Send([]byte("hello world4"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("send 5")
-	err = client.Send(&Message{
-		Data: []byte("hello world5"),
-	})
+	err = client.Send([]byte("hello world5"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("send 6")
-	err = client.Send(&Message{
-		Data: []byte("hello world6"),
-	})
+	err = client.Send([]byte("hello world6"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,9 +61,7 @@ func TestClient(t *testing.T) {
 	go func() {
 		for i := 0; true; i++ {
 			time.Sleep(2 * time.Second)
-			err = client.Send(&Message{
-				Data: []byte(fmt.Sprintf("auto send %d", i)),
-			})
+			err = client.Send([]byte(fmt.Sprintf("auto send %d", i)))
 
 			if i > 20 {
 				client.Destroy()
@@ -90,7 +76,7 @@ func TestClient(t *testing.T) {
 	ch := client.Receive()
 
 	for data := range ch {
-		fmt.Println("receive data:", string(data.Data.([]byte)))
+		fmt.Println("receive data:", string(data.Data))
 		// data.Response(map[string]interface{}{
 		// 	"msg": "I'm fine.",
 		// })
