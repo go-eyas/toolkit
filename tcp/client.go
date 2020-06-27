@@ -30,6 +30,10 @@ func NewClient(conf *Config) (*Client, error) {
 		return nil ,errors.New("the Packer and Parser must be specified together")
 	}
 
+	if conf.Logger == nil {
+		conf.Logger = EmptyLogger
+	}
+
 	if conf.Network == "" {
 		conf.Network = "tcp"
 	}

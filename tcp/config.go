@@ -6,4 +6,5 @@ type Config struct {
   Network string                                // tcp 的网络类型，可选值为 "tcp", "tcp4", "tcp6", "unix" or "unixpacket"
   Packer  func([]byte) ([]byte, error)          // tcp 数据包的封装函数，传入的数据是需要发送的业务数据，返回发送给 tcp 的数据
   Parser  func(*Conn, []byte) ([][]byte, error) // 将收到的数据包，根据私有协议转换成业务数据，在这里处理粘包,半包等数据包问题，返回处理好的数据包
+  Logger  LoggerI
 }
