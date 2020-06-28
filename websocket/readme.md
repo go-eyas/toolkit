@@ -42,7 +42,7 @@ func main() {
   server := wsrv.New(&Config{
     MsgType: websocket.TextMessage, // 消息类型 websocket.TextMessage | websocke.BinaryMessage
   })
-  server.UseRequest(func(c *wsrv.Context) {
+  server.Use(func(c *wsrv.Context) {
     if c.CMD != "register" {
       _, ok := c.Get("uid").(int)
       if !ok {
