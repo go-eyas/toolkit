@@ -67,6 +67,6 @@ func TestClient(t *testing.T) {
   //   panic(err)
   // }
   //
-  // c := make(chan bool, 0)
-  // <- c
+  c := make(chan bool, 0)
+  <- c
 }

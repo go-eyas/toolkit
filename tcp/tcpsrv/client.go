@@ -39,8 +39,16 @@ func NewClientSrv(conf *tcp.Config) (*ClientSrv, error) {
   }
 
   go srv.reader()
+  go srv.heartbeat()
 
   return srv, nil
+}
+
+func (cs *ClientSrv) heartbeat() {
+  for {
+    time.Sleep(5 * time.Second)
+    cs.Engine.Send([]byte{})
+  }
 }
 
 func (cs *ClientSrv) reader() {

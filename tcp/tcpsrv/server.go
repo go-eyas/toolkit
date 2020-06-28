@@ -53,10 +53,12 @@ func (srv *ServerSrv) onCreate(conn *tcp.Conn) {
   srv.sessionMu.Lock()
   srv.Session[sid] = make(map[string]interface{})
   srv.sessionMu.Unlock()
+  srv.logger.Infof("[TCP] New conn id=%d", conn.ID)
 }
 func (srv *ServerSrv) onClose(conn *tcp.Conn) {
   sid := conn.ID
   srv.Destroy(sid)
+  srv.logger.Infof("[TCP] CLOSE conn id=%d", conn.ID)
 }
 
 func (srv *ServerSrv) handlerReceive(req *tcp.Message) {
@@ -173,7 +175,27 @@ func (srv *ServerSrv) Push(sid uint64, data *TCPResponse) error {
   return conn.Send(payload)
 }
 
-func (srv *ServerSrv) checkHeartbeat() {}
+func (srv *ServerSrv) checkHeartbeat() {
+  for {
+    time.Sleep(time.Second)
+    now := time.Now().Unix() - 30
+    srv.heartbeat.Range(func(key, val interface{}) bool {
+      sid, ok := key.(uint64)
+      if !ok {
+        return true
+      }
+      hbTime, ok := val.(int64)
+      if !ok {
+        return true
+      }
+
+      if hbTime < now {
+        go srv.onClose(srv.Engine.Sockets[sid])
+      }
+      return true
+    })
+  }
+}
 func (srv *ServerSrv) Destroy(sid uint64) {
   conn, ok := srv.Engine.Sockets[sid]
   if !ok {
