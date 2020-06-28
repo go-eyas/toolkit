@@ -18,9 +18,9 @@ func TestServerSrv(t *testing.T) {
   }
 
   srv.Use(func(c *Context) {
-    fmt.Printf("TCP 收到 cmd=%s seqno=%s data=%s", c.CMD, c.Seqno, string(c.Payload))
+    fmt.Printf("TCP 收到 cmd=%s seqno=%s data=%s\n", c.CMD, c.Seqno, string(c.Payload))
     c.Next()
-    fmt.Printf("TCP 响应 cmd=%s seqno=%s data=%s", c.CMD, c.Seqno, string(c.Response.Data))
+    fmt.Printf("TCP 响应 cmd=%s seqno=%s data=%s\n", c.CMD, c.Seqno, string(c.Response.Data))
   })
   srv.Use(func(c *Context) {
     if c.CMD != "register" {
@@ -36,7 +36,14 @@ func TestServerSrv(t *testing.T) {
   })
 
   srv.Handle("register", func(c *Context) {
-    c.Set("uid", int64(123))
+    body := &struct {
+      UID int64 `json:"uid"`
+    }{}
+    err := c.Bind(body)
+    if err != nil {
+      panic(err)
+    }
+    c.Set("uid", body.UID)
     c.OK()
     c.Next()
   })

@@ -24,7 +24,9 @@ func TestClient(t *testing.T) {
     fmt.Println("on receive userinfo msg:", response)
   })
 
-  res, err := client.Send("register")
+  res, err := client.Send("register", map[string]interface{}{
+    "uid": 1234,
+  })
   if err != nil {
     panic(err)
   }
