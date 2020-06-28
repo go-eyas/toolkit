@@ -46,6 +46,76 @@ str, err := r.Get("toolkit:test")
 
 ```
 
+# [TCP](./tcp)
+
+**server**
+
+```go
+import "github.com/go-eyas/toolkit/tcp"
+
+func main() {
+  server, err := tcp.NewServer(&tcp.Config{
+  	Network: "tcp", // 网络类型，不填默认 tcp
+    // tcp 监听地址
+    Addr:    "127.0.0.1:6600",
+    
+    // 私有协议实现，不传将使用默认的私有协议实现
+    // Parser: func([]byte) ([]byte, error) {},
+    // Packer: func(*Conn, []byte) ([][]byte, error){},
+  })
+  
+  // 接收数据
+  ch := server.Receive()
+  for data := range ch {
+  	fmt.Printf("server receive: %v", data.Data)
+    
+    // 服务器收到数据后，响应发送一条数据到客户端 
+  	err := data.Response([]byte("server receive your message"))
+  }
+
+  // 给所有连接都发送消息
+  for connID, conn := range server.Sockets {
+    fmt.Println("connID: ", connID)
+    server.Send(conn, []byte("broadcast some message"))
+    // or
+    // server.SendConnID(connID, []byte("broadcast some message"))
+  }
+}
+```
+
+**client**
+
+```go
+import "github.com/go-eyas/toolkit/tcp"
+
+func main() {
+  client, err := tcp.NewClient(&tcp.Config{
+    Network: "tcp", // 网络类型，不填默认 tcp
+    // tcp 服务端地址
+  	Addr:    "127.0.0.1:6600",
+  
+    // 私有协议实现，不传将使用默认的私有协议实现
+  	// Parser: func([]byte) ([]byte, error) {},
+  	// Packer: func(*Conn, []byte) ([][]byte, error){},
+  })
+  
+  // 接收数据
+  ch := client.Receive()
+  go func() {
+    for msg := range ch {
+      // msg.Data 经过 Parser 处理过的数据
+      // msg.Conn tcp 连接实例 
+      fmt.Println("client receive:", string(msg.Data))
+    }
+  }()
+  
+  // 发送数据，send 后将立马把数据传给 Packer 处理后，在发送到 tcp 连接
+  err = client.Send([]byte("hello world1"))
+}
+```
+
+还有一个开箱即用的 [tcp 服务](./tcp/tcpsrv)
+
 # [长连接 Websocket](./websocket)
 
 ```go
