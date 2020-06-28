@@ -13,14 +13,15 @@ import (
 
 // WebsocketServer 服务器
 type WebsocketServer struct {
-  Engine              *websocket.WS
-  Config              *websocket.Config
-  logger              websocket.LoggerI
-  routes              map[string][]WSHandler            // 路由
-  Session             map[uint64]map[string]interface{} // map[sid]SessionData
-  heartbeat           *sync.Map            // 心跳
-  requestMiddlewares  []WSHandler                       // 请求中间件
-  responseMiddlewares []WSHandler                       // 响应中间件
+  Engine    *websocket.WS
+  Config    *websocket.Config
+  logger    websocket.LoggerI
+  routes    map[string][]WSHandler            // 路由
+  Session   map[uint64]map[string]interface{} // map[sid]SessionData
+  heartbeat *sync.Map                         // 心跳
+  // requestMiddlewares  []WSHandler                       // 请求中间件
+  // responseMiddlewares []WSHandler                       // 响应中间件
+  handlerMiddlewares []WSHandler // 中间件
 }
 
 // WSHandler 请求处理器
@@ -38,14 +39,15 @@ func New(conf *websocket.Config) *WebsocketServer {
   }
   ws := websocket.New(conf)
   server := &WebsocketServer{
-    Config:              conf,
-    logger:              conf.Logger,
-    Engine:              ws,
-    routes:              make(map[string][]WSHandler),
-    Session:             make(map[uint64]map[string]interface{}),
-    heartbeat:           &sync.Map{},
-    requestMiddlewares:  make([]WSHandler, 0),
-    responseMiddlewares: make([]WSHandler, 0),
+    Config:             conf,
+    logger:             conf.Logger,
+    Engine:             ws,
+    routes:             make(map[string][]WSHandler),
+    Session:            make(map[uint64]map[string]interface{}),
+    heartbeat:          &sync.Map{},
+    handlerMiddlewares: make([]WSHandler, 0),
+    // requestMiddlewares:  make([]WSHandler, 0),
+    // responseMiddlewares: make([]WSHandler, 0),
   }
 
   ws.HandleClose(server.onClose)
@@ -70,14 +72,14 @@ func (ws *WebsocketServer) receive() {
       }
 
       ctx := &Context{
-        SessionID:   req.SID,
-        Socket:      req.Socket,
-        RawMessage:  req,
-        Engine:      ws.Engine,
-        Payload:     req.Payload,
-        RequestData: &WSRequest{},
-        Server:      ws,
-        logger:      ws.logger,
+        SessionID:  req.SID,
+        Socket:     req.Socket,
+        RawMessage: req,
+        Engine:     ws.Engine,
+        Payload:    req.Payload,
+        Request:    &WSRequest{},
+        Server:     ws,
+        logger:     ws.logger,
       }
       sessionMu.Lock()
       vals, ok := ws.Session[req.SID]
@@ -89,16 +91,16 @@ func (ws *WebsocketServer) receive() {
       ctx.Values = vals
       ctx.logger.Infof("[WS] <-- RECV CMD=%s data=%s", ctx.CMD, string(ctx.Payload))
 
-      err := json.Unmarshal(ctx.Payload, ctx.RequestData)
+      err := json.Unmarshal(ctx.Payload, ctx.Request)
       if err != nil {
         ctx.logger.Errorf("WS request json parse error: %v", err)
         return
       }
-      ctx.CMD = ctx.RequestData.CMD
-      ctx.Seqno = ctx.RequestData.Seqno
-      ctx.ResponseData = &WSResponse{
-        CMD:    ctx.RequestData.CMD,
-        Seqno:  ctx.RequestData.Seqno,
+      ctx.CMD = ctx.Request.CMD
+      ctx.Seqno = ctx.Request.Seqno
+      ctx.Response = &WSResponse{
+        CMD:    ctx.Request.CMD,
+        Seqno:  ctx.Request.Seqno,
         Status: -1,
         Msg:    "not implement",
         Data:   map[string]interface{}{},
@@ -109,55 +111,72 @@ func (ws *WebsocketServer) receive() {
           ws.logger.Errorf("%v", err)
           debug.PrintStack()
           r := util.ParseError(err)
-          ctx.ResponseData.Status = r.Status
-          ctx.ResponseData.Msg = r.Msg
-          ctx.ResponseData.Data = r.Data
+          ctx.Response.Status = r.Status
+          ctx.Response.Msg = r.Msg
+          ctx.Response.Data = r.Data
         }
         ctx.writeResponse()
       }()
 
-      for _, mdl := range ws.requestMiddlewares {
-        mdl(ctx)
-        if ctx.isAbort {
-          break
-        }
+      handlers := append([]WSHandler{}, ws.handlerMiddlewares...)
+      handler, ok := ws.routes[ctx.CMD]
+      if ok {
+        handlers = append(handlers, handler...)
       }
-      if !ctx.isAbort {
-        handler, ok := ws.routes[ctx.CMD]
-        if !ok {
-          return
-        } else {
-          ctx.ResponseData.Status = 1
-          ctx.ResponseData.Msg = "empty implement"
-        }
-        if !ctx.isAbort {
-          for _, h := range handler {
-            h(ctx)
-            if ctx.isAbort {
-              break
-            }
-          }
-        }
+      ctx.handlers = handlers
+      ctx.handlerIndex = -1
+
+      for !ctx.isAbort && ctx.handlerIndex < len(ctx.handlers) {
+        ctx.Next()
       }
 
-      for _, mdl := range ws.responseMiddlewares {
-        mdl(ctx)
-        if ctx.isAbort {
-          break
-        }
-      }
+      // for _, mdl := range ws.requestMiddlewares {
+      //   mdl(ctx)
+      //   if ctx.isAbort {
+      //     break
+      //   }
+      // }
+      // if !ctx.isAbort {
+      //   handler, ok := ws.routes[ctx.CMD]
+      //   if !ok {
+      //     return
+      //   } else {
+      //     ctx.Response.Status = 1
+      //     ctx.Response.Msg = "empty implement"
+      //   }
+      //   if !ctx.isAbort {
+      //     for _, h := range handler {
+      //       h(ctx)
+      //       if ctx.isAbort {
+      //         break
+      //       }
+      //     }
+      //   }
+      // }
+      //
+      // for _, mdl := range ws.responseMiddlewares {
+      //   mdl(ctx)
+      //   if ctx.isAbort {
+      //     break
+      //   }
+      // }
     }(req)
   }
 }
 
-// UseRequest 请求中间件
-func (ws *WebsocketServer) UseRequest(h WSHandler) {
-  ws.requestMiddlewares = append(ws.requestMiddlewares, h)
-}
+// // UseRequest 请求中间件
+// func (ws *WebsocketServer) UseRequest(h WSHandler) {
+//   ws.requestMiddlewares = append(ws.requestMiddlewares, h)
+// }
+//
+// // UseResponse 响应中间件
+// func (ws *WebsocketServer) UseResponse(h WSHandler) {
+//   ws.responseMiddlewares = append(ws.responseMiddlewares, h)
+// }
 
-// UseResponse 响应中间件
-func (ws *WebsocketServer) UseResponse(h WSHandler) {
-  ws.responseMiddlewares = append(ws.responseMiddlewares, h)
+// 处理器中间件
+func (srv *WebsocketServer) Use(h ...WSHandler) {
+  srv.handlerMiddlewares = append(srv.handlerMiddlewares, h...)
 }
 
 // Handle 注册 CMD 路由监听器

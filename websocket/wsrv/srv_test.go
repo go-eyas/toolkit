@@ -12,17 +12,22 @@ func TestSrv(t *testing.T) {
 	server := New(&websocket.Config{
 		Logger: log.SugaredLogger,
 	})
-	server.UseRequest(func(c *Context) {
-		log.Debugf("ws request middleware, sid=%d", c.SessionID)
-	})
-	server.UseResponse(func(c *Context) {
-		log.Debugf("ws response middleware, sid=%d", c.SessionID)
-	})
-	server.UseRequest(func(c *Context) {
-		// uid, ok := c.Get("uid").(int64)
-		// if !ok || uid == 0 {
-		// 	c.Abort()
-		// }
+	// server.UseRequest(func(c *Context) {
+	// 	log.Debugf("ws request middleware, sid=%d", c.SessionID)
+	// })
+	// server.UseResponse(func(c *Context) {
+	// 	log.Debugf("ws response middleware, sid=%d", c.SessionID)
+	// })
+	// server.UseRequest(func(c *Context) {
+	// 	// uid, ok := c.Get("uid").(int64)
+	// 	// if !ok || uid == 0 {
+	// 	// 	c.Abort()
+	// 	// }
+	// })
+	server.Use(func(c *Context) {
+		log.Debugf("ws request middleware, sid=%d, cmd=%s, data=%s", c.SessionID, c.CMD, string(c.Request.Data))
+		c.Next()
+		log.Debugf("ws response middleware, sid=%d cmd=%s, data=%v", c.SessionID, c.CMD, c.Response.Data)
 	})
 	server.Handle("register")
 	server.Handle("register", func(c *Context) {

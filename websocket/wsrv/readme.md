@@ -50,26 +50,43 @@
 示例概览
 
 ```go
+package main
+
 import (
   "net/http"
+  "github.com/go-eyas/toolkit/log"
   "github.com/go-eyas/toolkit/websocket"
   "github.com/go-eyas/toolkit/websocket/wsrv"
 )
 func main() {
-  server := wsrv.New(&Config{
+  server := wsrv.New(&websocket.Config{
     MsgType: websocket.TextMessage, // 消息类型 websocket.TextMessage | websocke.BinaryMessage
   })
-  server.UseRequest(func(c *wsrv.Context) {
+
+  server.Use(func(c *wsrv.Context) {
+  	log.Debugf("ws request middleware, sid=%d, cmd=%s, data=%s", c.SessionID, c.CMD, string(c.Request.Data))
+  	c.Next()
+  	log.Debugf("ws response middleware, sid=%d cmd=%s, data=%v", c.SessionID, c.CMD, c.Response.Data)
+  })
+  server.Use(func(c *wsrv.Context) {
     if c.CMD != "register" {
       _, ok := c.Get("uid").(int)
       if !ok {
+        
         c.Abort()
       }
     }
   })
 
   server.Handle("register", func(c *wsrv.Context) {
-    c.Set("uid", 1001)
+    body := &struct {
+     UID int64
+    }{}
+    err := c.Bind(body)
+    if err != nil {
+      panic(err)
+    }
+    c.Set("uid", body.UID)
     
     // server push
     for sid, vals := range server.Session {
@@ -87,13 +104,13 @@ func main() {
     c.Push(&wsrv.WSResponse{
       CMD: "user_register",
       Data: map[string]interface{}{
-        "uid": uid,
+        "uid": body.UID,
       },
     })
 
     c.OK()
   })
-  server,Handle("userinfo", func(c *wsrv.Context) {
+  server.Handle("userinfo", func(c *wsrv.Context) {
     uid := c.Get("uid").(int)
     c.OK(GetUserInfoByID(uid))
   })

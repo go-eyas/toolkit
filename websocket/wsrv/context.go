@@ -40,26 +40,28 @@ type Context struct {
   Engine       *websocket.WS      // 引擎
   Server       *WebsocketServer   // 服务器对象
   Payload      []byte             // 请求原始消息报文
-  RequestData  *WSRequest         // 已解析的请求数据
-  ResponseData *WSResponse        // 响应数据
+  Request  *WSRequest         // 已解析的请求数据
+  Response *WSResponse        // 响应数据
   logger       websocket.LoggerI
+  handlers []WSHandler // 当前请求上下文的处理器
+  handlerIndex int          // 当前中间件处理
   isAbort      bool // 是否已停止继续执行中间件和处理函数
   sendMu sync.Mutex
 }
 
 // OK 响应成功数据
 func (c *Context) OK(args ...interface{}) {
-  c.ResponseData.Status = util.CodeSuccess
-  c.ResponseData.Msg = "ok"
+  c.Response.Status = util.CodeSuccess
+  c.Response.Msg = "ok"
 
   if len(args) > 0 {
-    c.ResponseData.Data = args[0]
+    c.Response.Data = args[0]
   }
 }
 
 // Bind 解析并 JSON 绑定 data 数据到结构体，并验证数据正确性
 func (c *Context) Bind(v interface{}) error {
-  err := json.Unmarshal(c.RequestData.Data, v)
+  err := json.Unmarshal(c.Request.Data, v)
   if err != nil {
     return err
   }
@@ -90,10 +92,23 @@ func (c *Context) Push(data *WSResponse) error {
   return c.Server.Push(c.SessionID, data)
 }
 
+// 调用下个中间件
+func (c *Context) Next() {
+  if c.isAbort {
+    return
+  }
+  if c.handlerIndex < len(c.handlers)-1 {
+    c.handlerIndex++
+    c.handlers[c.handlerIndex](c)
+  } else {
+    c.Abort()
+  }
+}
+
 func (c *Context) writeResponse() error {
   c.sendMu.Lock()
   defer c.sendMu.Unlock()
-  payload, err := json.Marshal(c.ResponseData)
+  payload, err := json.Marshal(c.Response)
   if err != nil {
     return err
   }
