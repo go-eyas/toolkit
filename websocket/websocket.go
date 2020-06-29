@@ -75,9 +75,14 @@ var connMu sync.RWMutex
 
 // HTTPHandler 给 http 控制器绑定使用
 func (ws *WS) HTTPHandler(w http.ResponseWriter, r *http.Request) {
+  ws.Connect(w, r)
+}
+
+// 从 http 连接获取连接实例
+func (ws *WS) Connect(w http.ResponseWriter, r *http.Request) (*Conn, error) {
   socket, err := ws.Upgrader.Upgrade(w, r, nil)
   if err != nil {
-    return
+    return nil, err
   }
   ws.id++
 
@@ -101,6 +106,7 @@ func (ws *WS) HTTPHandler(w http.ResponseWriter, r *http.Request) {
   conn.Init()
 
   defer ws.destroyConn(ws.id)
+  return conn, nil
 }
 
 var page = template.Must(template.New("").Parse(`
