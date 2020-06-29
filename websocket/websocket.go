@@ -75,7 +75,12 @@ var connMu sync.RWMutex
 
 // HTTPHandler 给 http 控制器绑定使用
 func (ws *WS) HTTPHandler(w http.ResponseWriter, r *http.Request) {
-  ws.Connect(w, r)
+  conn, err := ws.Connect(w, r)
+  if err != nil {
+    return
+  }
+  conn.Init()
+  defer ws.DestroyConn(ws.id)
 }
 
 // 从 http 连接获取连接实例
@@ -103,9 +108,6 @@ func (ws *WS) Connect(w http.ResponseWriter, r *http.Request) (*Conn, error) {
     createH(conn)
   }
 
-  conn.Init()
-
-  defer ws.destroyConn(ws.id)
   return conn, nil
 }
 
@@ -214,8 +216,8 @@ func (ws *WS) HandleCreate(fn EventHandle) {
   ws.createHandlers = append(ws.createHandlers, fn)
 }
 
-// destroyConn 销毁连接
-func (ws *WS) destroyConn(cid uint64) {
+// DestroyConn 销毁连接
+func (ws *WS) DestroyConn(cid uint64) {
   conn, ok := ws.Clients[ws.id]
   if !ok {
     return
