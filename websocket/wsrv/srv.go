@@ -221,7 +221,7 @@ func (ws *WebsocketServer) Destroy(sid uint64) {
   if ok {
     conn.Destroy()
   }
-  ws.heartbeat.Delete(conn.ID)
+  ws.heartbeat.Delete(sid)
   sessionMu.Lock()
   delete(ws.Session, sid)
   sessionMu.Unlock()
