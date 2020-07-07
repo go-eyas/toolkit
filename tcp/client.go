@@ -18,6 +18,7 @@ type Client struct {
 	closeConnHandlers []connHandler // 当有连接关闭时触发函数
 
 	closeNotify chan *Conn // 连接关闭时通知通道
+	isConnect bool // 当前是否已连接
 }
 
 // 实例化 tcp 客户端连接，与服务器建立 TCP 连接
@@ -26,7 +27,7 @@ func NewClient(conf *Config) (*Client, error) {
 	if conf.Packer == nil && conf.Parser == nil {
 		conf.Packer = Packer
 		defaultParsePoll, conf.Parser = Parser()
-	} else if conf.Packer != nil || conf.Parser != nil {
+	} else if conf.Packer == nil || conf.Parser == nil {
 		return nil ,errors.New("the Packer and Parser must be specified together")
 	}
 
@@ -46,8 +47,13 @@ func NewClient(conf *Config) (*Client, error) {
 		closeNotify: make(chan *Conn, 0),
 	}
 
+	client.HandleCreate(func(conn *Conn) {
+		client.isConnect = true
+	})
+
 	// 连接关闭了通知一下
 	client.HandleClose(func(conn *Conn) {
+		client.isConnect = false
 		delete(defaultParsePoll, conn.ID)
 		if client.autoReconnect {
 			client.closeNotify <- conn
@@ -105,15 +111,19 @@ func (c *Client) reconnect() {
 
 // 读取 tcp 连接数据
 func (c *Client) reader() {
+	go c.Conn.reader()
 	for _, h := range c.createConnHandlers {
 		h(c.Conn)
 	}
-	c.Conn.reader()
 }
 
 // HandleCreate 每当连接建立成功后时，触发函数
 func (c *Client) HandleCreate(h connHandler) {
 	c.createConnHandlers = append(c.createConnHandlers, h)
+	// 如果注册的时候已经连接上了，手动触发一次，防止首次连接不会触发
+	if c.isConnect {
+		h(c.Conn)
+	}
 }
 
 // HandleClose 每当连接断开后，触发函数

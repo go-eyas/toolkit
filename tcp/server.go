@@ -25,7 +25,7 @@ func NewServer(conf *Config) (*Server, error) {
   if conf.Packer == nil && conf.Parser == nil {
     conf.Packer = Packer
     defaultParsePoll, conf.Parser = Parser()
-  } else if conf.Packer != nil || conf.Parser != nil {
+  } else if conf.Packer == nil || conf.Parser == nil {
     return nil, errors.New("the Packer and Parser must be specified together")
   }
 

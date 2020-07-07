@@ -25,6 +25,8 @@ type ClientSrv struct {
   sendProcess map[string]chan *TCPResponse
 }
 
+const onMessageEvt = "__ON_ALL_MESSAGE__"
+
 // NewClientSrv 实例化客户端服务
 func NewClientSrv(conf *tcp.Config) (*ClientSrv, error) {
   engine, err := tcp.NewClient(conf)
@@ -67,12 +69,22 @@ func (cs *ClientSrv) reader() {
       ch <- res
     }
     cs.Emitter.Emit(res.CMD, res)
+    cs.Emitter.Emit(onMessageEvt, res)
   }
 }
 
 // On 监听服务器响应数据，每当服务器有数据发送过来，都会以 cmd 为事件名触发监听函数
 func (cs *ClientSrv) On(cmd string, h func(*TCPResponse)) {
   cs.Emitter.On(cmd, func(_res interface{}) {
+    res, ok := _res.(*TCPResponse)
+    if ok {
+      h(res)
+    }
+  })
+}
+
+func (cs *ClientSrv) OnMessage(h func(*TCPResponse)) {
+  cs.Emitter.On(onMessageEvt, func(_res interface{}) {
     res, ok := _res.(*TCPResponse)
     if ok {
       h(res)
