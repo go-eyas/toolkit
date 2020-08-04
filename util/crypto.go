@@ -17,12 +17,15 @@ func BcryptVerify(hash, src string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(src)) == nil
 }
 
-func AesEncrypt(src, key []byte) []byte {
-	block, _ := aes.NewCipher(key)
+func AesEncrypt(src, key []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
 	src = _padding(src, block.BlockSize())
 	blockmode := cipher.NewCBCEncrypter(block, key)
 	blockmode.CryptBlocks(src, src)
-	return src
+	return src, nil
 }
 
 func AesDecrypt(src []byte, key []byte) []byte {
