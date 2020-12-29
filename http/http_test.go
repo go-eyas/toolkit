@@ -7,10 +7,10 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	http := New().UseRequest(func(req *Request) *Request {
+	http := New().UseRequest(func(req Request) Request {
 		fmt.Printf("http 发送 %s %s header=%+v data=%+v\n", req.SuperAgent.Method, req.SuperAgent.Url, req.SuperAgent.Header, req.SuperAgent.Data)
 		return req
-	}).UseResponse(func(req *Request, res *Response) *Response {
+	}).UseResponse(func(req Request, res *Response) *Response {
 		fmt.Printf("http 接收 %s %s\n", req.SuperAgent.Method, req.SuperAgent.Url)
 		return res
 	}).Timeout(time.Second * 10).
@@ -37,10 +37,10 @@ func TestGet(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
-	h := New().UseRequest(func(req *Request) *Request {
+	h := New().UseRequest(func(req Request) Request {
 		fmt.Printf("http 发送 %s %s header=%+v data=%+v\n", req.SuperAgent.Method, req.SuperAgent.Url, req.SuperAgent.Header, req.SuperAgent.Data)
 		return req
-	}).UseResponse(func(req *Request, res *Response) *Response {
+	}).UseResponse(func(req Request, res *Response) *Response {
 		fmt.Printf("http 接收 %s %s\n", req.SuperAgent.Method, req.SuperAgent.Url)
 		return res
 	})

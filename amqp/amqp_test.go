@@ -16,7 +16,7 @@ func TestAmqp(t *testing.T) {
 	}
 
 	mq, err := New(&Config{
-		Addr:         "amqp://guest:guest@10.0.2.252:5672/",
+		Addr:         "amqp://guest:guest@mq.aam.test:5672/",
 		ExchangeName: "toolkit.exchange1.test",
 	})
 	if err != nil {
@@ -156,4 +156,52 @@ func ExampleSimple() {
 		}
 	}()
 
+}
+
+func TestAmqpR(t *testing.T) {
+	queue := &Queue{
+		Name:    "debug.desktop.v1.server.rpc.req_mall_card_detail_list",
+		Durable: true,
+	}
+	// exchange := &Exchange{Name: "toolkit.exchange.test"}
+
+	mq, err := New(&Config{
+		Addr:         "amqp://guest:guest@10.0.2.252:5672/",
+		ExchangeName: "desktop.exchange.v1",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	testCount := 500000
+
+	startTime := time.Now()
+
+	// wg := sync.WaitGroup{}
+	si := 0
+	for ; si < testCount; si++ {
+		msg := &Message{
+			Data: []byte(fmt.Sprintf(`{"cmd":"req_mall_card_detail_list","data":{"card_id":1,"mid":9100251},"seqno":"%d"}`, si)),
+		}
+		err := mq.Pub(queue, msg)
+		if err != nil {
+			panic(err)
+		}
+	}
+	t.Logf("发送 %d 条数据, 耗时 %d 纳秒 \n", si, time.Since(startTime))
+
+	// startTime1 := time.Now()
+	// wg.Add(testCount)
+	// go func() {
+	// 	msgs, err := mq.Sub(queue)
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// 	for range msgs {
+	// 		wg.Done()
+	// 	}
+	// }()
+
+	// wg.Wait()
+	// t.Logf("消费 %d 条数据, 耗时 %d 纳秒 \n", testCount, time.Since(startTime1))
 }

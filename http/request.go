@@ -10,8 +10,8 @@ import (
 	"github.com/parnurzeal/gorequest"
 )
 
-type requestMiddlewareHandler func(*Request) *Request
-type responseMidlewareHandler func(*Request, *Response) *Response
+type requestMiddlewareHandler func(Request) Request
+type responseMidlewareHandler func(Request, *Response) *Response
 
 func newRaw() Request {
 	return Request{
@@ -33,6 +33,7 @@ func New() Request {
 type Request struct {
 	SuperAgent  *gorequest.SuperAgent
 	querys      []interface{}
+	headers 	map[string]interface{}
 	reqMdls     []requestMiddlewareHandler
 	resMdls     []responseMidlewareHandler
 	cookies     []*http.Cookie
@@ -68,9 +69,10 @@ func (r Request) Clone() Request {
 	}
 
 	// headers
-	for k, v := range r.SuperAgent.Header {
-		req.SuperAgent.Header[k] = v
-	}
+	req.headers = map[string]interface{}{}
+	//for k, v := range r.SuperAgent.Header {
+	//	req.SuperAgent.Header[k] = v
+	//}
 
 	return req
 }
@@ -146,7 +148,20 @@ func (r Request) BaseURL(url string) Request {
 }
 
 // Do 发出请求，method 请求方法，url 请求地址， query 查询参数，body 请求数据，file 文件对象/地址
-func (r Request) Do(method, url string, query, body, file interface{}) (*Response, error) {
+func (r Request) Do(method, url string, args ...interface{}) (*Response, error) {
+	var query, body, file interface{}
+	switch len(args) {
+	case 1:
+		query = args[0]
+	case 2:
+		query = args[0]
+		body = args[1]
+	default:
+		query = args[0]
+		body = args[1]
+		file = args[2]
+	}
+
 	r = r.Clone()
 	// set mthod url
 	if method == "" || url == "" {
@@ -193,8 +208,8 @@ func (r Request) Do(method, url string, query, body, file interface{}) (*Respons
 
 	// 执行请求中间件
 	for _, mdl := range r.reqMdls {
-		r1 := mdl(&r)
-		r = *r1
+		r1 := mdl(r)
+		r = r1
 	}
 
 	res, resBody, errs := r.SuperAgent.EndBytes()
@@ -208,7 +223,7 @@ func (r Request) Do(method, url string, query, body, file interface{}) (*Respons
 
 	// 执行响应中间件
 	for _, mdl := range r.resMdls {
-		response = mdl(&r, response)
+		response = mdl(r, response)
 	}
 
 	statusCode := response.Status()
@@ -220,38 +235,42 @@ func (r Request) Do(method, url string, query, body, file interface{}) (*Respons
 }
 
 // Head 发起 head 请求
-func (r Request) Head(url string, query interface{}) (*Response, error) {
-	return r.Do("HEAD", url, query, nil, nil)
+func (r Request) Head(url string, args ...interface{}) (*Response, error) {
+	return r.Do("HEAD", url, args...)
 }
 
 // Get 发起 get 请求， query 查询参数
-func (r Request) Get(url string, query interface{}) (*Response, error) {
-	return r.Do("GET", url, query, nil, nil)
+func (r Request) Get(url string, args ...interface{}) (*Response, error) {
+	return r.Do("GET", url, args...)
 }
 
 // Post 发起 post 请求，body 是请求带的参数，可使用json字符串或者结构体
-func (r Request) Post(url string, body interface{}) (*Response, error) {
-	return r.Do("POST", url, nil, body, nil)
+func (r Request) Post(url string, body ...interface{}) (*Response, error) {
+	args := append(make([]interface{}, 1), body...)
+	return r.Do("POST", url, args...)
 }
 
 // Put 发起 put 请求，body 是请求带的参数，可使用json字符串或者结构体
-func (r Request) Put(url string, body interface{}) (*Response, error) {
-	return r.Do("PUT", url, nil, body, nil)
+func (r Request) Put(url string, body ...interface{}) (*Response, error) {
+	args := append(make([]interface{}, 1), body...)
+	return r.Do("PUT", url, args...)
 }
 
 // Del 发起 delete 请求，body 是请求带的参数，可使用json字符串或者结构体
-func (r Request) Del(url string, body interface{}) (*Response, error) {
-	return r.Do("DELETE", url, nil, body, nil)
+func (r Request) Del(url string, body ...interface{}) (*Response, error) {
+	args := append(make([]interface{}, 1), body...)
+	return r.Do("DELETE", url, args...)
 }
 
 // Patch 发起 patch 请求，body 是请求带的参数，可使用json字符串或者结构体
-func (r Request) Patch(url string, body interface{}) (*Response, error) {
-	return r.Do("PATCH", url, nil, body, nil)
+func (r Request) Patch(url string, body ...interface{}) (*Response, error) {
+	args := append(make([]interface{}, 1), body...)
+	return r.Do("PATCH", url, args...)
 }
 
 // Options 发起 options 请求，query 查询参数
-func (r Request) Options(url string, query interface{}) (*Response, error) {
-	return r.Do("OPTIONS", url, query, nil, nil)
+func (r Request) Options(url string, args ...interface{}) (*Response, error) {
+	return r.Do("OPTIONS", url, args...)
 }
 
 // PostFile 发起 post 请求上传文件，将使用表单提交，file 是文件地址或者文件流， body 是请求带的参数，可使用json字符串或者结构体
