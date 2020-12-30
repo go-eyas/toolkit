@@ -370,6 +370,7 @@ func (c *Client) DoRequest(method, u string, data ...interface{}) (resp *Respons
 		for _, h := range cli.resMdls {
 			resp = h(cli, httpReq, resp)
 		}
+		err = resp.GetError()
 	}()
 
 	for {
