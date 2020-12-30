@@ -252,3 +252,10 @@ http.Proxy("").Get("https://www.google.com", map[string]string{
 ## godoc
 
 [API 文档](https://gowalker.org/github.com/go-eyas/toolkit/http/v2)
+
+## Tranks
+
+部分 api 和代码借鉴了以下库
+
+ * [GoFrame](https://goframe.org/) 部分api，思路借鉴自 GoFrame 
+ * axios 中间件思路来源于 axios
