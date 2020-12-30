@@ -45,14 +45,14 @@ func (c *Client) Type(ty string) *Client {
 	if !ok {
 		ct = Types[TypeJSON]
 	}
-	cli.Header(headerContentTypeKey, ct)
+	cli = cli.Header(headerContentTypeKey, ct)
 	return cli
 }
 
 // UserAgent 设置请求 user-agent，默认是 chrome 75.0
 func (c *Client) UserAgent(name string) *Client {
 	cli := c.getSetting()
-	cli.Header("User-Agent", name)
+	cli = cli.Header("User-Agent", name)
 	return cli
 }
 
