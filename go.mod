@@ -29,6 +29,7 @@ require (
 	github.com/tebeka/strftime v0.1.4 // indirect
 	go.uber.org/zap v1.15.0
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
+	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	moul.io/http2curl v1.0.0 // indirect
 	xorm.io/xorm v1.0.1
 )

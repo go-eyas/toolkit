@@ -28,24 +28,24 @@ func (e *ResponseError) Add(err error) {
 }
 
 type Response struct {
-	Request *Request
-	HttpRequest *http.Request
-	HttpResponse *http.Response
+	Client *Client
+	Request *http.Request
+	Response *http.Response
 	body []byte
 	Err *ResponseError
 	IsRead bool
 }
 
-func newResponse(request *Request, r *http.Request) *Response {
+func newResponse(request *Client, r *http.Request) *Response {
 	return &Response{
-		Request: request,
-		HttpRequest: r,
+		Client: request,
+		Request: r,
 		Err: &ResponseError{errs: make([]error, 0)},
 	}
 }
 
 func (rp *Response) ready() {
-	//if rp.HttpResponse == nil {
+	//if rp.Response == nil {
 	//	return
 	//}
 	if code := rp.StatusCode(); code >= 400 {
@@ -54,10 +54,10 @@ func (rp *Response) ready() {
 }
 
 func (rp *Response) StatusCode() int {
-	if rp.HttpResponse == nil {
+	if rp.Response == nil {
 		return 0
 	}
-	return rp.HttpResponse.StatusCode
+	return rp.Response.StatusCode
 }
 
 func (rp *Response) Status() int {
@@ -76,8 +76,8 @@ func (rp *Response) AddError(err error) {
 }
 
 func (rp *Response) ReadAllBody() (bt []byte, err error) {
-	if rp.HttpResponse != nil && !rp.IsRead {
-		bt, err = ioutil.ReadAll(rp.HttpResponse.Body)
+	if rp.Response != nil && !rp.IsRead {
+		bt, err = ioutil.ReadAll(rp.Response.Body)
 		rp.body = bt
 		rp.IsRead = true
 		return

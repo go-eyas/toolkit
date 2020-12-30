@@ -1,12 +1,14 @@
-package http
+package http_test
 
 import (
+	"github.com/go-eyas/toolkit/log"
+	"github.com/go-eyas/toolkit/http/v2"
 	"testing"
 	"time"
 )
 
 func TestGet(t *testing.T) {
-	http := New().TransformRequest(Logger.LoggerRequest).TransformResponse(Logger.LoggerResponse).Timeout(time.Second * 10).
+	http := http.Use(http.AccessLogger(log.SugaredLogger)).Timeout(time.Second * 10).
 		BaseURL("https://api.github.com").
 		BaseURL("/repos")
 
@@ -30,7 +32,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
-	h := New().TransformRequest(Logger.LoggerRequest).TransformResponse(Logger.LoggerResponse)
+	h := http.New().Use(http.AccessLogger(log.SugaredLogger))
 	res, err := h.Header("just-test", "1234").
 		Header("func-header", func() string {return "val in fn"}).
 		Get("https://api.github.com/repos/eyasliu/blog/issuesx")
@@ -38,22 +40,27 @@ func TestError(t *testing.T) {
 		panic("should get 404 error")
 	}
 
-	res, err = h.Get("", nil)
+	res, err = h.Header("a", "1").Get("", nil)
 	if err != nil {
 		t.Logf("success empty url, statusCode=%d body=%s error=%s", res.Status(), res.String(), err.Error())
 	} else {
 		panic("should error")
 	}
 
-	res, err = h.Post("https://api.github.com/repos/eyasliu/blog/issuesx", map[string]interface{}{"hello": "test"})
+	res, err = h.Header("b", "2").Post("https://api.github.com/repos/eyasliu/blog/issuesx", map[string]interface{}{"hello": "test"})
 	if err != nil {
 		t.Logf("success empty url, statusCode=%d body=%s error=%s", res.Status(), res.String(), err.Error())
 	} else {
 		panic("should error")
 	}
-
-
-
+	h.Safe(false)
+	h.Header("c", "3")
+	res, err = h.Header("d", "4").Post("https://api.github.com/repos/eyasliu/blog/issuesx", map[string]interface{}{"hello": "test"})
+	if err != nil {
+		t.Logf("success empty url, statusCode=%d body=%s error=%s", res.Status(), res.String(), err.Error())
+	} else {
+		panic("should error")
+	}
 }
 
 // func TestProxy(t *testing.T) {

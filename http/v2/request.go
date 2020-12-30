@@ -20,10 +20,10 @@ import (
 	"time"
 )
 
-type requestMiddlewareHandler = func(*Request, *http.Request) *Request
-type responseMiddlewareHandler = func(*Request, *http.Request, *Response) *Response
+type requestMiddlewareHandler = func(*Client, *http.Request) *Client
+type responseMiddlewareHandler = func(*Client, *http.Request, *Response) *Response
 
-type Request struct {
+type Client struct {
 	http.Client
 	safe        bool // 链式操作安全
 	reqMdls     []requestMiddlewareHandler
@@ -40,8 +40,8 @@ type Request struct {
 	browserMode bool
 }
 
-func New() *Request {
-	return &Request{
+func New() *Client {
+	return &Client{
 		Client: http.Client{
 			Transport: &http.Transport{
 				// No validation for https certification of the server in default.
@@ -60,63 +60,63 @@ func New() *Request {
 	}
 }
 
-func (r *Request) Safe(s ...bool) *Request {
+func (c *Client) Safe(s ...bool) *Client {
 	if len(s) == 0 {
-		r.safe = true
+		c.safe = true
 	} else {
-		r.safe = s[0]
+		c.safe = s[0]
 	}
-	return r
+	return c
 }
 
-func (r *Request) Clone() *Request {
-	nr := New()
-	*nr = *r
+func (c *Client) Clone() *Client {
+	ncli := New()
+	*ncli = *c
 	//query
-	if l := len(r.queryArgs); l > 0 {
-		nr.queryArgs = make([]interface{}, l)
-		copy(nr.queryArgs, r.queryArgs)
+	if l := len(c.queryArgs); l > 0 {
+		ncli.queryArgs = make([]interface{}, l)
+		copy(ncli.queryArgs, c.queryArgs)
 	}
 
 	// headers
-	if n := len(r.headers); n > 0 {
-		nr.headers = make(map[string]interface{})
-		for k, v := range r.headers {
-			nr.headers[k] = v
+	if n := len(c.headers); n > 0 {
+		ncli.headers = make(map[string]interface{})
+		for k, v := range c.headers {
+			ncli.headers[k] = v
 		}
 	}
 
 	// cookies
-	if n := len(r.cookies); n > 0 {
-		nr.cookies = make(map[string]string)
-		for k, v := range r.cookies {
-			nr.cookies[k] = v
+	if n := len(c.cookies); n > 0 {
+		ncli.cookies = make(map[string]string)
+		for k, v := range c.cookies {
+			ncli.cookies[k] = v
 		}
 	}
 
 	// mdls
-	if n := len(r.reqMdls); n > 0 {
-		nr.reqMdls = make([]requestMiddlewareHandler, n)
-		copy(nr.reqMdls, r.reqMdls)
+	if n := len(c.reqMdls); n > 0 {
+		ncli.reqMdls = make([]requestMiddlewareHandler, n)
+		copy(ncli.reqMdls, c.reqMdls)
 	}
 
-	if n := len(r.resMdls); n > 0 {
-		nr.resMdls = make([]responseMiddlewareHandler, n)
-		copy(nr.resMdls, r.resMdls)
+	if n := len(c.resMdls); n > 0 {
+		ncli.resMdls = make([]responseMiddlewareHandler, n)
+		copy(ncli.resMdls, c.resMdls)
 	}
 
-	return nr
+	return ncli
 }
 
-func (r *Request) getSetting() *Request {
-	if r.safe {
-		return r.Clone()
+func (c *Client) getSetting() *Client {
+	if c.safe {
+		return c.Clone()
 	} else {
-		return r
+		return c
 	}
 }
 
-func (r *Request) setProxy(proxyURL string) {
+func (c *Client) setProxy(proxyURL string) {
 	if strings.TrimSpace(proxyURL) == "" {
 		return
 	}
@@ -125,8 +125,8 @@ func (r *Request) setProxy(proxyURL string) {
 		return
 	}
 	if _proxy.Scheme == "http" {
-		if _, ok := r.Transport.(*http.Transport); ok {
-			r.Transport.(*http.Transport).Proxy = http.ProxyURL(_proxy)
+		if _, ok := c.Transport.(*http.Transport); ok {
+			c.Transport.(*http.Transport).Proxy = http.ProxyURL(_proxy)
 		}
 	} else {
 		var auth = &proxy.Auth{}
@@ -147,29 +147,29 @@ func (r *Request) setProxy(proxyURL string) {
 			_proxy.Host,
 			auth,
 			&net.Dialer{
-				Timeout:   r.Client.Timeout,
-				KeepAlive: r.Client.Timeout,
+				Timeout:   c.Client.Timeout,
+				KeepAlive: c.Client.Timeout,
 			},
 		)
 		if err != nil {
 			return
 		}
-		if _, ok := r.Transport.(*http.Transport); ok {
-			r.Transport.(*http.Transport).DialContext = func(ctx context.Context, network, addr string) (conn net.Conn, e error) {
+		if _, ok := c.Transport.(*http.Transport); ok {
+			c.Transport.(*http.Transport).DialContext = func(ctx context.Context, network, addr string) (conn net.Conn, e error) {
 				return dialer.Dial(network, addr)
 			}
 		}
 	}
 }
 
-func (r *Request) DoRequest(method, u string, data ...interface{}) (resp *Response, err error) {
-	req := r.getSetting()
+func (c *Client) DoRequest(method, u string, data ...interface{}) (resp *Response, err error) {
+	cli := c.getSetting()
 	method = strings.ToUpper(method)
-	u = r.baseURL + strings.Trim(u, " ")
+	u = c.baseURL + strings.Trim(u, " ")
 
 	// header
 	headers := http.Header{}
-	for k, v := range req.headers {
+	for k, v := range cli.headers {
 		var val string
 		switch v.(type) {
 		case string:
@@ -177,9 +177,9 @@ func (r *Request) DoRequest(method, u string, data ...interface{}) (resp *Respon
 		case func() string:
 			h := v.(func() string)
 			val = h()
-		case func(*Request) string:
-			h := v.(func(*Request) string)
-			val = h(req)
+		case func(*Client) string:
+			h := v.(func(*Client) string)
+			val = h(cli)
 		default:
 			continue
 		}
@@ -193,7 +193,7 @@ func (r *Request) DoRequest(method, u string, data ...interface{}) (resp *Respon
 	}
 
 	param := "" // url 查询参数
-	for _, q := range req.queryArgs {
+	for _, q := range cli.queryArgs {
 		param += toUrlEncoding(q)
 	}
 
@@ -320,15 +320,15 @@ func (r *Request) DoRequest(method, u string, data ...interface{}) (resp *Respon
 		}
 	}
 
-	// It's necessary set the req.Host if you want to custom the host value of the request.
+	// It's necessary set the cli.Host if you want to custom the host value of the request.
 	// It uses the "Host" value from header if it's not set in the request.
 	if host := httpReq.Header.Get("Host"); host != "" && httpReq.Host == "" {
 		httpReq.Host = host
 	}
 	// Custom Cookie.
-	if len(req.cookies) > 0 {
+	if len(cli.cookies) > 0 {
 		headerCookie := httpReq.Header.Get("Cookie")
-		for k, v := range req.cookies {
+		for k, v := range cli.cookies {
 			if len(headerCookie) > 0 {
 				headerCookie += ";"
 			}
@@ -344,38 +344,38 @@ func (r *Request) DoRequest(method, u string, data ...interface{}) (resp *Respon
 	//	httpReq.SetBasicAuth(c.authUser, c.authPass)
 	//}
 
-	resp = newResponse(req, httpReq)
+	resp = newResponse(cli, httpReq)
 	// The request body can be reused for dumping
 	// raw HTTP request-response procedure.
 	//reqBodyContent, _ := ioutil.ReadAll(httpReq.Body)
 	//resp.requestBody = reqBodyContent
 	//httpReq.Body =  (reqBodyContent)
 
-	if req.proxy != "" {
-		req.setProxy(req.proxy)
+	if cli.proxy != "" {
+		cli.setProxy(cli.proxy)
 	}
-	req.Client.Timeout = req.timeout
+	cli.Client.Timeout = cli.timeout
 	// call middleware
-	for _, h := range req.reqMdls {
-		req = h(req, httpReq)
+	for _, h := range cli.reqMdls {
+		cli = h(cli, httpReq)
 	}
 
 	// call res mdl
 	defer func() {
-		for _, h := range req.resMdls {
-			resp = h(req, httpReq, resp)
+		for _, h := range cli.resMdls {
+			resp = h(cli, httpReq, resp)
 		}
 	}()
 
 	for {
-		if resp.HttpResponse, err = req.Do(httpReq); err != nil {
+		if resp.Response, err = cli.Do(httpReq); err != nil {
 			// The response might not be nil when err != nil.
-			if resp.HttpResponse != nil {
-				resp.HttpResponse.Body.Close()
+			if resp.Response != nil {
+				resp.Response.Body.Close()
 			}
-			if req.retryCount > 0 {
-				req.retryCount--
-				time.Sleep(req.retryInterval)
+			if cli.retryCount > 0 {
+				cli.retryCount--
+				time.Sleep(cli.retryInterval)
 			} else {
 				resp.Err.Add(err)
 				return resp, err
@@ -386,13 +386,13 @@ func (r *Request) DoRequest(method, u string, data ...interface{}) (resp *Respon
 	}
 
 	// Auto saving cookie content.
-	if req.browserMode {
+	if cli.browserMode {
 		now := time.Now()
-		for _, v := range resp.HttpResponse.Cookies() {
+		for _, v := range resp.Response.Cookies() {
 			if !v.Expires.IsZero() && v.Expires.UnixNano() < now.UnixNano() {
-				delete(req.cookies, v.Name)
+				delete(cli.cookies, v.Name)
 			} else {
-				req.cookies[v.Name] = v.Value
+				cli.cookies[v.Name] = v.Value
 			}
 		}
 	}
