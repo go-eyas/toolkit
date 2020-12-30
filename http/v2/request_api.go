@@ -5,6 +5,80 @@ import (
 	"time"
 )
 
+// 批量设置 HTTP Client 的配置项
+type ClientConfig struct {
+	TransformRequest  requestMiddlewareHandler // 请求中间件
+	TransformResponse responseMiddlewareHandler // 响应中间件
+	Headers            map[string]string // 预设 Header
+	Cookies            map[string]string // 预设请求 Cookie
+	Type              string // 预设请求数据类型, 该配置为空时忽略
+	UserAgent         string // 预设 User-Agent, 该配置为空时忽略
+	Proxy             string // 预设请求代理，该配置为空时忽略
+	BaseURL           string // 预设 url 前缀，叠加
+	Query             interface{} // 预设请求查询参数
+	Timeout           time.Duration // 请求超时时间，该配置为 0 时忽略
+	Retry             int // 重试次数，该配置为 0 时忽略
+}
+
+// Config 批量设置 HTTP Client 的配置项
+func (c *Client) Config(conf *ClientConfig) *Client {
+	cli := c.getSetting()
+
+	if conf.TransformRequest != nil {
+		cli = cli.TransformRequest(conf.TransformRequest)
+	}
+
+	if conf.TransformResponse != nil {
+		cli = cli.TransformResponse(conf.TransformResponse)
+	}
+
+	if len(conf.Headers) > 0 {
+		for k, v := range conf.Headers {
+			cli = cli.Header(k, v)
+		}
+	}
+
+	if len(conf.Cookies) > 0 {
+		for k, v := range conf.Cookies {
+			cli = cli.Cookie(k, v)
+		}
+	}
+
+	if conf.Type != "" {
+		cli = cli.Type(conf.Type)
+	}
+	if conf.UserAgent != "" {
+		cli = cli.UserAgent(conf.UserAgent)
+	}
+
+	if conf.Proxy != "" {
+		cli = cli.Proxy(conf.Proxy)
+	}
+
+	if conf.BaseURL != "" {
+		cli = cli.BaseURL(conf.BaseURL)
+	}
+
+	if conf.Query != nil {
+		cli = cli.Query(conf.Query)
+	}
+
+	if conf.Timeout > 0 {
+		cli = cli.Timeout(conf.Timeout)
+	}
+	if conf.Retry > 0 {
+		cli = cli.Retry(conf.Retry)
+	}
+
+	return cli
+}
+
+func (c *Client) SetClient(rawClient http.Client) *Client {
+	cli := c.getSetting()
+	cli.Client = rawClient
+	return cli
+}
+
 // Header 设置请求 Header
 func (c *Client) Header(k string, v interface{}) *Client {
 	cli := c.getSetting()
@@ -12,14 +86,14 @@ func (c *Client) Header(k string, v interface{}) *Client {
 	return cli
 }
 
-// TransformRequest 增加请求中间件
+// TransformRequest 增加请求中间件，可以在请求发起前对整个请求做前置处理，比如修改 body, header, proxy, url, 配置项等等，也可以获取请求的各种数据，如自定义日志，类似于 axios 的 transformRequest
 func (c *Client) TransformRequest(h requestMiddlewareHandler) *Client {
 	cli := c.getSetting()
 	cli.reqMdls = append(cli.reqMdls, h)
 	return cli
 }
 
-// TransformResponse 增加响应中间件
+// TransformResponse 增加响应中间件，可以在收到请求后第一时间对请求做处理，如验证 status code，验证 body 数据，甚至重置 body 数据，更改响应等等任何操作，类似于 axios 的 transformResponse
 func (c *Client) TransformResponse(h responseMiddlewareHandler) *Client {
 	cli := c.getSetting()
 	cli.resMdls = append(cli.resMdls, h)
@@ -31,6 +105,7 @@ type ClientMiddleware interface {
 	TransformResponse(*Client, *http.Request, *Response) *Response
 }
 
+// Use 应用中间件，实现了 TransformRequest 和 TransformResponse 接口的中间件，如 http.Use(http.AccessLogger())，通常用于成对的请求响应处理
 func (c *Client) Use(mdl ClientMiddleware) *Client {
 	cli := c.getSetting()
 	cli = cli.TransformRequest(mdl.TransformRequest)
@@ -49,7 +124,7 @@ func (c *Client) Type(ty string) *Client {
 	return cli
 }
 
-// UserAgent 设置请求 user-agent，默认是 chrome 75.0
+// UserAgent 设置请求 user-agent
 func (c *Client) UserAgent(name string) *Client {
 	cli := c.getSetting()
 	cli = cli.Header("User-Agent", name)
@@ -70,7 +145,7 @@ func (c *Client) Proxy(url string) *Client {
 	return cli
 }
 
-// Query 增加查询参数
+// Query 增加查询参数, 如果设置过多次，将会叠加拼接
 func (c *Client) Query(query interface{}) *Client {
 	cli := c.getSetting()
 	cli.queryArgs = append(cli.queryArgs, query)

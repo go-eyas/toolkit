@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"golang.org/x/net/proxy"
@@ -40,17 +41,20 @@ type Client struct {
 	browserMode bool
 }
 
+var defaultHttpClient = http.Client{
+	Transport: &http.Transport{
+		// No validation for https certification of the server in default.
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+		DisableKeepAlives: true,
+	},
+}
+
+// 创建 HTTP Client 实例
 func New() *Client {
 	return &Client{
-		Client: http.Client{
-			Transport: &http.Transport{
-				// No validation for https certification of the server in default.
-				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true,
-				},
-				DisableKeepAlives: true,
-			},
-		},
+		Client: defaultHttpClient,
 		safe: true,
 		headers: map[string]interface{}{},
 		cookies: map[string]string{},
@@ -60,6 +64,7 @@ func New() *Client {
 	}
 }
 
+// Safe 链式安全模式，启用后，链式调用时对所有配置的修改都是逐个叠加，并且不会影响链式前配置，默认开启
 func (c *Client) Safe(s ...bool) *Client {
 	if len(s) == 0 {
 		c.safe = true
@@ -70,7 +75,8 @@ func (c *Client) Safe(s ...bool) *Client {
 }
 
 func (c *Client) Clone() *Client {
-	ncli := New()
+	//ncli := New()
+	ncli := &Client{}
 	*ncli = *c
 	//query
 	if l := len(c.queryArgs); l > 0 {
@@ -162,8 +168,10 @@ func (c *Client) setProxy(proxyURL string) {
 	}
 }
 
+// DoRequest 发起请求， data 参数在 GET, HEAD 请求时被解析为查询参数，在其他方法请求时根据 Content-Type 解析为其他数据类型，如 json, url-form-encoding, xml 等等
 func (c *Client) DoRequest(method, u string, data ...interface{}) (resp *Response, err error) {
 	cli := c.getSetting()
+
 	method = strings.ToUpper(method)
 	u = c.baseURL + strings.Trim(u, " ")
 
@@ -192,10 +200,7 @@ func (c *Client) DoRequest(method, u string, data ...interface{}) (resp *Respons
 		headers.Set(headerContentTypeKey, contentType)
 	}
 
-	param := "" // url 查询参数
-	for _, q := range cli.queryArgs {
-		param += toUrlEncoding(q)
-	}
+	param := toUrlEncoding(cli.queryArgs...) // url 查询参数
 
 	body := ""  // body 数据
 	var doData interface{}
@@ -206,6 +211,7 @@ func (c *Client) DoRequest(method, u string, data ...interface{}) (resp *Respons
 	// 解析第三个参数
 	if doData != nil {
 		if method == "GET" || method == "HEAD" || method == "OPTIONS" {
+			// 这些请求是没有 body 的
 			switch doData.(type) {
 			case string:
 				param = doData.(string)
@@ -215,8 +221,8 @@ func (c *Client) DoRequest(method, u string, data ...interface{}) (resp *Respons
 				param = toUrlEncoding(doData)
 			}
 		} else {
-			switch contentType {
-			case "application/json":
+			// 有 body 的酌情序列化
+			if strings.Contains(contentType, "/json") {
 				switch doData.(type) {
 				case string, []byte: // json 字符串
 					body = toString(doData)
@@ -227,20 +233,19 @@ func (c *Client) DoRequest(method, u string, data ...interface{}) (resp *Respons
 						body = string(b)
 					}
 				}
-			case "application/xml": // 这年头谁还用xml啊
+			} else if strings.Contains(contentType, "/xml") {
 				switch doData.(type) {
 				case string, []byte: // xml 字符串
 					body = toString(doData)
 				default:
-					//if b, err := gparser.VarToXml(data[0]); err != nil {
-					//	return nil, err
-					//} else {
-					//	param = gconv.UnsafeBytesToStr(b)
-					//}
+					if b, err := xml.Marshal(doData); err != nil {
+						return nil, err
+					} else {
+						body = string(b)
+					}
 				}
-
-			default: // form 那些
-				body = toUrlEncoding(doData)
+			} else {
+				body = toUrlEncoding(data...)
 			}
 		}
 	}
@@ -259,7 +264,7 @@ func (c *Client) DoRequest(method, u string, data ...interface{}) (resp *Respons
 		} else {
 			httpReq.Header = headers
 		}
-	}else if strings.Contains(body, "@file:") {
+	} else if strings.Contains(body, "@file:") {
 		// File uploading request.
 		buffer := new(bytes.Buffer)
 		writer := multipart.NewWriter(buffer)

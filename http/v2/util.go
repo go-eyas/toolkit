@@ -24,20 +24,25 @@ func toString(v interface{}) string {
 	}
 }
 
-func toUrlEncoding(data interface{}) string {
+func toUrlEncoding(data ...interface{}) string {
+	if len(data) == 0 {
+		return ""
+	}
 	urlVals := url.Values{}
-	mp := toMap(data)
-	for k, v := range mp {
-		val := ""
-		switch v.(type) {
-		case string:
-			val = v.(string)
-		case int,int64,[]byte,float32,float64:
-			val = toString(v)
-		default:
-			continue
+	for _, q := range data {
+		mp := toMap(q)
+		for k, v := range mp {
+			val := ""
+			switch v.(type) {
+			case string:
+				val = v.(string)
+			case int,int64,[]byte,float32,float64:
+				val = toString(v)
+			default:
+				continue
+			}
+			urlVals.Add(k, val)
 		}
-		urlVals.Add(k, val)
 	}
 	return urlVals.Encode()
 }

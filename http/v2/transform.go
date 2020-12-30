@@ -3,7 +3,6 @@ package http
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 )
@@ -42,7 +41,7 @@ func (l *HttpLogger) TransformRequest(c *Client, req *http.Request) *Client {
 		// 如果body太长，估计是文件上传，不打印，也不侵入，并且太长的body也会妨碍控制台输出
 		if req.ContentLength < l.MaxLoggerBodyLen {
 			body, _ = ioutil.ReadAll(req.Body)
-			req.Body = ioutil.NopCloser(io.Reader(bytes.NewReader(body)))
+			req.Body = ioutil.NopCloser(bytes.NewReader(body))
 			logtext = fmt.Sprintf("%s body=%s", logtext, string(body))
 		}
 	}
@@ -53,7 +52,7 @@ func (l *HttpLogger) TransformRequest(c *Client, req *http.Request) *Client {
 // 打印 HTTP 响应日志
 // warning: 会先读取一遍 Response.Body，如果该中间件导致了 http 下载异常问题，请关闭该中间件
 func (l *HttpLogger) TransformResponse(c *Client, req *http.Request, resp *Response) *Response {
-	logText := fmt.Sprintf("HTTP RESV %s %s %d", req.Method, req.URL, resp.StatusCode())
+	logText := fmt.Sprintf("HTTP RECV %s %s %d", req.Method, req.URL, resp.StatusCode())
 	if resp.IsRead {
 		resp.ReadAllBody()
 	}

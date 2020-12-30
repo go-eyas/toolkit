@@ -8,20 +8,20 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	http := http.Use(http.AccessLogger(log.SugaredLogger)).Timeout(time.Second * 10).
+	h := http.Use(http.AccessLogger(log.SugaredLogger)).Timeout(time.Second * 10).
 		BaseURL("https://api.github.com").
 		BaseURL("/repos")
 
-	res, err := http.Get("/eyasliu/blog/issues", map[string]interface{}{
+	res, err := h.Get("/eyasliu/blog/issues", map[string]interface{}{
 		"per_page": 1,
 	})
 	if err != nil {
 		panic(err)
 	}
-	s := []struct {
+	var s []struct {
 		URL   string `json:"url"`
 		Title string
-	}{}
+	}
 	err = res.JSON(&s)
 	if err != nil {
 		panic(err)
@@ -47,7 +47,7 @@ func TestError(t *testing.T) {
 		panic("should error")
 	}
 
-	res, err = h.Header("b", "2").Post("https://api.github.com/repos/eyasliu/blog/issuesx", map[string]interface{}{"hello": "test"})
+	res, err = h.Header("b", "2").Type("form").Post("https://api.github.com/repos/eyasliu/blog/issuesx", map[string]interface{}{"hello": "test"})
 	if err != nil {
 		t.Logf("success empty url, statusCode=%d body=%s error=%s", res.Status(), res.String(), err.Error())
 	} else {
@@ -61,6 +61,9 @@ func TestError(t *testing.T) {
 	} else {
 		panic("should error")
 	}
+	h = h.Safe(true).BaseURL("http://notexistdomain.qwer")
+	h.Type("form").Post("/", `file=@file:./http.go`)
+
 }
 
 // func TestProxy(t *testing.T) {

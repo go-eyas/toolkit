@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -97,6 +98,12 @@ func (rp *Response) Body() (bt []byte) {
 	return
 }
 
+// Byte 同 Body()
+func (rp *Response) Byte() (bt []byte) {
+	bt, _ = rp.ReadAllBody()
+	return
+}
+
 // SetBody 重置响应的 Body
 func (rp *Response) SetBody(bt []byte) {
 	rp.IsRead = true
@@ -114,8 +121,29 @@ func (rp *Response) Error() string {
 	return rp.Err.Error()
 }
 
+func (rp *Response) Header() http.Header {
+	if rp.Response != nil {
+		return rp.Response.Header
+	}
+	return http.Header{}
+}
+
+func (rp *Response) Cookie() []*http.Cookie {
+	if rp.Response != nil {
+		return rp.Response.Cookies()
+	}
+	return nil
+}
+
 // JSON 使用 JSON 解析响应 Body 数据
 func (rp *Response) JSON(v interface{}) error {
 	if !rp.IsRead { rp.ReadAllBody() }
 	return json.Unmarshal(rp.body, v)
 }
+
+// XML 使用 XML 解析响应 Body 数据
+func (rp *Response) XML(v interface{}) error {
+	if !rp.IsRead { rp.ReadAllBody() }
+	return xml.Unmarshal(rp.body, v)
+}
+

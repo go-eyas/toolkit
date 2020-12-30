@@ -10,7 +10,7 @@ func Type(name string) *Client {
 	return defClient.Type(name)
 }
 
-// UserAgent 设置请求 user-agent，默认是 chrome 75.0
+// UserAgent 设置请求 user-agent
 func UserAgent(name string) *Client {
 	return defClient.UserAgent(name)
 }
